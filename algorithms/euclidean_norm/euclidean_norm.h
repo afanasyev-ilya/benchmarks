@@ -35,8 +35,7 @@ AT euclidean_distance(AT* x, AT *y, size_t size)
 }
 
 template <typename AT>
-AT Kernel(int mode, AT* x, AT *y, size_t size)
+AT Kernel(AT* x, AT *y, size_t size)
 {
-    if(mode == 0)
-        return euclidean_distance(x, y, size);
+    return euclidean_distance(x, y, size);
 }

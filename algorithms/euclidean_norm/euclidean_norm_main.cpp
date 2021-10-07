@@ -1,18 +1,11 @@
-#include <stdio.h>
-#include <sys/time.h>
-
-#include "locality.h"
-#include "size.h"
-#include <chrono>
-#include "../../locutils_new/timers.h"
-
-#include "math_norm.h"
+#include "common/lib.h"
+#include "euclidean_norm.h"
 
 typedef double base_type;
 
-void CallKernel(int core_type)
+void call_kernel(Parser &_parser)
 {
-    size_t size = (size_t)LENGTH;
+    size_t size = _parser.get_length();
     base_type * y = new base_type[size];
     base_type * x = new base_type[size];
 
@@ -39,7 +32,7 @@ void CallKernel(int core_type)
         counter.start_timing();
         #endif
 
-        Kernel(core_type, x, y, size);
+        Kernel(x, y, size);
 
         #ifndef METRIC_RUN
         counter.end_timing();
@@ -58,9 +51,12 @@ void CallKernel(int core_type)
     delete[]x;
 }
 
-extern "C" int main()
+int main(int argc, char **argv)
 {
-    CallKernel((int)MODE);
+    Parser parser;
+    parser.parse_args(argc, argv);
+
+    call_kernel(parser);
     return 0;
 }
 
