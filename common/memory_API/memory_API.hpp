@@ -3,15 +3,7 @@
 template <typename _T>
 void MemoryAPI::allocate_array(_T **_ptr, size_t _size)
 {
-    #if defined(__USE_NEC_SX_AURORA__)
-    *_ptr = (_T*)aligned_alloc(sizeof(_T), _size*sizeof(_T));
-    #elif defined(__USE_GPU__)
-    SAFE_CALL(cudaMallocManaged((void**)_ptr, _size * sizeof(_T)));
-    #elif defined(__USE_KNL__)
-    *_ptr = (_T*)_mm_malloc(sizeof(_T)*(_size),2097152);
-    #else
-    *_ptr = (_T*)malloc(_size*sizeof(_T));
-    #endif
+    *_ptr = new _T[_size];
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,18 +19,7 @@ void MemoryAPI::allocate_host_array(_T **_ptr, size_t _size)
 template <typename _T>
 void MemoryAPI::free_array(_T *_ptr)
 {
-    if(_ptr != NULL)
-    {
-        #if defined(__USE_NEC_SX_AURORA__)
-        free(_ptr);
-        #elif defined(__USE_GPU__)
-        SAFE_CALL(cudaFree((void*)_ptr));
-        #elif defined(__USE_KNL__)
-        free(_ptr);
-        #else
-        free(_ptr);
-        #endif
-    }
+    delete []_ptr;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

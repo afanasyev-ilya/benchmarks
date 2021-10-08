@@ -11,6 +11,8 @@ struct CSRMatrix
     int elements;
 };
 
+
+
 #include "spmv.h"
 
 void init(CSRMatrix &_matrix, int _size, int _deg)
@@ -26,7 +28,7 @@ void init(CSRMatrix &_matrix, int _size, int _deg)
     _matrix.size = _size;
     _matrix.elements = elems;
 
-    MemoryAPI::allocate_array(&_matrix.row_ptrs, _matrix.size + 1);
+    MemoryAPI::allocate_array(&_matrix.row_ptrs, (_matrix.size + 1));
     MemoryAPI::allocate_array(&_matrix.vals, _matrix.elements);
     MemoryAPI::allocate_array(&_matrix.col_ids, _matrix.elements);
 
@@ -36,7 +38,7 @@ void init(CSRMatrix &_matrix, int _size, int _deg)
     {
         for(int j = 0; j < row_sizes[i]; j++)
         {
-            base_type r = static_cast <base_type> (rand()) / static_cast <base_type> (RAND_MAX);
+            base_type r = rand() % 6 - 3;
             _matrix.vals[ptr] = r;
             _matrix.col_ids[ptr] = rand() % _size;
             ptr++;
@@ -81,10 +83,6 @@ void call_kernel(Parser &_parser)
 
     CSRMatrix matrix;
 
-    base_type *x, *y;
-    MemoryAPI::allocate_array(&x, matrix.size);
-    MemoryAPI::allocate_array(&y, matrix.size);
-
     #ifdef METRIC_RUN
     int iterations = LOC_REPEAT * USUAL_METRICS_REPEAT;
     #else
@@ -92,8 +90,16 @@ void call_kernel(Parser &_parser)
     #endif
 
     init(matrix, size, deg);
-    cout << "init done" << endl;
-    //print(matrix);
+
+    base_type *x, *y;
+    MemoryAPI::allocate_array(&x, matrix.size);
+    MemoryAPI::allocate_array(&y, matrix.size);
+
+    for(int i = 0; i < matrix.size; i++)
+    {
+        x[i] = rand() % 6 - 3;
+        y[i] = rand() % 6 - 3;
+    }
 
     #ifndef METRIC_RUN
     size_t flops_requested = matrix.elements * 2;
@@ -109,9 +115,7 @@ void call_kernel(Parser &_parser)
         counter.start_timing();
         #endif
 
-        cout << "int" << endl;
-        kernel(matrix, x, y);
-        cout << "out" << endl;
+        kernel(matrix, x, y, _parser.get_mode());
 
         #ifndef METRIC_RUN
         counter.end_timing();
