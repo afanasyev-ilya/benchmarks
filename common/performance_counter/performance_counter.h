@@ -51,7 +51,7 @@ public:
         std::cout << std::fixed;
         std::cout << "local_time: " << local_time << " s" << std::endl;
         std::cout << "local_bw: " << local_bw << " Gb/s" << std::endl;
-        std::cout << "local_flops: " << local_flops << " GFlops" << std::endl;
+        std::cout << "local_flops: " << local_flops << " GFlops" << std::endl << std::endl;
     }
 
     void print_average_counters(bool flops_required) {

@@ -6,12 +6,20 @@ class Parser
 {
 private:
     int radius;
+    int mode;
+
+    int size;
+    int deg;
 
     size_t length;
 public:
     Parser();
     
     int get_radius() { return radius; };
+    int get_mode() { return mode; };
+    int get_size() { return size; };
+    int get_deg() { return deg; };
+
     size_t get_length() { return length; };
     
     void parse_args(int _argc, char **_argv);

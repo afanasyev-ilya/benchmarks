@@ -1,7 +1,3 @@
-#include <math.h>
-#include <omp.h>
-
-
 #define MAX_INNER_ITERS 10
 const double eps = 0.001;
 
