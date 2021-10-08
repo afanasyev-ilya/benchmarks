@@ -1,9 +1,18 @@
+#ifdef __USE_INTEL__
+#include <mm_malloc.h>
+#endif
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <typename _T>
 void MemoryAPI::allocate_array(_T **_ptr, size_t _size)
 {
+    #ifdef __USE_INTEL__
+    cout << "using alligned alloc" << endl;
+    *_ptr = (_T*)_mm_malloc(sizeof(_T)*(_size),2097152);
+    #else
     *_ptr = new _T[_size];
+    #endif
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

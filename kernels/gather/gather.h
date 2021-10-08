@@ -1,5 +1,9 @@
 #include <string>
 
+#ifdef __USE_INTEL__
+#include <immintrin.h>
+#endif
+
 using std::string;
 
 template<typename IT, typename DT>
@@ -50,11 +54,17 @@ void gather(DT *large, IT *indexes, const DT * __restrict__ small, size_t size)
 template<typename IT, typename DT>
 void gather_optimized(DT *large, IT *indexes, const DT * __restrict__ small, size_t size)
 {
+    #ifdef __USE_INTEL__
     #pragma omp parallel for schedule(static)
-    for(size_t i = 0; i < size; i++)
+    for(size_t i = 0; i < size; i += 8)
     {
-        large[i] = small[indexes[i]];
+        __m512d val;
+        __m256i idx;
+        idx = _mm256_load_si256((__m256i *)(&indexes[i]));
+        val = _mm512_i32gather_pd(idx, small, 8);
+        _mm512_store_pd(&large[i], val);
     }
+    #endif
 }
 
 template<typename IT, typename DT>
@@ -63,5 +73,7 @@ void kernel(int mode, DT *large, IT *indexes, const DT * __restrict__ small, siz
     if(mode == 0)
         gather(large, indexes, small, size);
     else if(mode == 1)
+    {
         gather_optimized(large, indexes, small, size);
+    }
 }
