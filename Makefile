@@ -9,11 +9,11 @@ ifeq ($(COMPILER),g++)
 	Include_Path = -I ./
 
 	ifeq ($(ARCH),kunpeng)
-    	Flags = -D __USE_KUNPENG__ -O2 -fno-trapping-math -fopenmp-simd -fopenmp  -ffreestanding -fopt-info-vec-all=report.lst -ffast-math -march=armv8.2-a -mtune=tsv110
+    	Flags = -D __USE_KUNPENG__ -O2 -std=c++17 -fno-trapping-math -fopenmp-simd -fopenmp  -ffreestanding -fopt-info-vec-all=report.lst -ffast-math -march=armv8.2-a -mtune=tsv110
     endif
 
     ifeq ($(ARCH),intel)
-        Flags = -D __USE_INTEL__ -O2 -fno-trapping-math -fopenmp-simd -fopenmp  -ffreestanding -fopt-info-vec-all=report.lst -ffast-math -march=skylake-avx512
+        Flags = -D __USE_INTEL__ -O2 -std=c++17 -fno-trapping-math -fopenmp-simd -fopenmp  -ffreestanding -fopt-info-vec-all=report.lst -ffast-math -march=skylake-avx512
     endif
 
   	Libraries = -fopenmp

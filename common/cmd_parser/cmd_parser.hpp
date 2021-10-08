@@ -9,6 +9,33 @@ Parser::Parser()
     mode = 0;
     size = 10;
     deg = 32;
+
+    small_size = 10;
+    large_size = 100;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+inline long mid_num(const std::string& s) {
+    return std::strtol(&s[s.find('_') + 1], nullptr, 10);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+inline size_t get_size_in_bytes(const std::string& s)
+{
+    size_t mult = 1;
+    if (s.find("KB") != std::string::npos) {
+        mult = 1024;
+    }
+    if (s.find("MB") != std::string::npos) {
+        mult = 1024*1024;
+    }
+    if (s.find("GB") != std::string::npos) {
+        mult = 1024*1024*1024;
+    }
+    int short_num = mid_num(s);
+    return mult * short_num;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43,6 +70,16 @@ void Parser::parse_args(int _argc, char **_argv)
         if ((option.compare("-s") == 0) || (option.compare("-size") == 0))
         {
             size = atoi(_argv[++i]);
+        }
+
+        if (option.compare("-small-size") == 0)
+        {
+            small_size = get_size_in_bytes(_argv[++i]);
+        }
+
+        if (option.compare("-large-size") == 0)
+        {
+            large_size = get_size_in_bytes(_argv[++i]);
         }
     }
 }

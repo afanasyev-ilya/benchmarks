@@ -5,10 +5,24 @@ typedef int index_type;
 
 #include "gather.h"
 
+void print_size(string name, size_t len)
+{
+    string sizes[] = { "B", "KB", "MB", "GB", "TB" };
+    int order = 0;
+    while (len >= 1024 && order < 4) {
+        order++;
+        len = len/1024;
+    }
+    cout << name << " : " << len << " " << sizes[order] << endl;
+}
+
 void call_kernel(Parser &_parser)
 {
-    size_t large_size = _parser.get_size();
-    size_t small_size = (size_t)((size_t)_parser.get_radius() * 1024 / sizeof(base_type));
+    size_t large_size = _parser.get_large_size() / sizeof(base_type);
+    size_t small_size = _parser.get_small_size() / sizeof(base_type);
+
+    print_size("large_size", large_size*sizeof(base_type));
+    print_size("small_size", small_size*sizeof(base_type));
 
     base_type *large_data, *small_data;
     index_type *indexes;
@@ -35,6 +49,7 @@ void call_kernel(Parser &_parser)
 	{
         #ifndef METRIC_RUN
 		counter.start_timing();
+        re_init(small_data, small_size);
         #endif
 
 		kernel(_parser.get_mode(), large_data, indexes, small_data, large_size);
