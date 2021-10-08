@@ -1,7 +1,9 @@
 #pragma once
 
+#include "avx_spmv.h"
+
 template <typename _T>
-inline void csr_spmv(CSRMatrix &_matrix, _T *_x, _T *_y)
+inline void csr_spmv_general(CSRMatrix &_matrix, _T *_x, _T *_y)
 {
     int size = _matrix.size;
     base_type *vals = _matrix.vals;
@@ -18,8 +20,31 @@ inline void csr_spmv(CSRMatrix &_matrix, _T *_x, _T *_y)
     }
 }
 
+inline void cell_c_spmv_general(densemat* b, sparsemat* mat, densemat* x)
+{
+    const int C = mat->C;
+    const int  P = mat->P;
+
+    #pragma omp parallel for schedule(static)
+    for(int chunk=0; chunk<mat->nchunks; ++chunk)
+    {
+        for(int rowInChunk=0; rowInChunk<C; ++rowInChunk)
+        {
+            b->val[chunk*C+rowInChunk] = 0;
+        }
+        for(int j=0; j<mat->chunkLen[chunk]; j=j+P)
+        {
+            int idx = mat->chunkPtr[chunk]+j*C;
+            for(int rowInChunk=0; rowInChunk<C; ++rowInChunk)
+            {
+                b->val[chunk*C+rowInChunk] += mat->valSellC[idx+rowInChunk]*x->val[mat->colSellC[idx+rowInChunk]];
+            }
+        }
+    }
+}
+
 template <typename _T>
-inline void csr_spmv_unrollled(CSRMatrix &_matrix, _T *_x, _T *_y)
+inline void csr_spmv_unrolled(CSRMatrix &_matrix, _T *_x, _T *_y)
 {
     int size = _matrix.size;
     base_type *vals = _matrix.vals;
@@ -51,8 +76,8 @@ inline void csr_spmv_unrollled(CSRMatrix &_matrix, _T *_x, _T *_y)
 template <typename _T>
 inline void kernel(CSRMatrix &_matrix, _T *_x, _T *_y, int _mode)
 {
-    if(mode == 0)
+    if(_mode == 0)
         csr_spmv(_matrix, _x, _y);
-    else if(mode == 1)
+    else if(_mode == 1)
         csr_spmv_unrolled(_matrix, _x, _y);
 }

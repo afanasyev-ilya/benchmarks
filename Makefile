@@ -34,7 +34,8 @@ spmv: create_folders spmv.o
 l1_bandwidth: create_folders l1_bandwidth.o
 	$(ARCH_COMPILER) object_files/l1_bandwidth.o $(Library_Path) $(Libraries) -o ./bin/l1_bandwidth$(ArchSuffix)
 
-
+gather: create_folders gather.o
+	$(ARCH_COMPILER) object_files/gather.o $(Library_Path) $(Libraries) -o ./bin/gather$(ArchSuffix)
 
 
 spmv.o: algorithms/spmv/spmv_main.cpp
@@ -45,6 +46,9 @@ euclidean_norm.o: algorithms/euclidean_norm/euclidean_norm_main.cpp
 
 l1_bandwidth.o: kernels/l1_bandwidth/l1_bandwidth_main.cpp
 	$(ARCH_COMPILER) $(Flags) $(Include_Path)  -c kernels/l1_bandwidth/l1_bandwidth_main.cpp -o object_files/l1_bandwidth.o
+
+gather.o: kernels/gather/gather_main.cpp
+	$(ARCH_COMPILER) $(Flags) $(Include_Path)  -c kernels/gather/gather_main.cpp -o object_files/gather.o
 
 
 create_folders:
