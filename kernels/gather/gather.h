@@ -3,20 +3,20 @@
 using std::string;
 
 template<typename IT, typename DT>
-void Init(DT *a, IT *b, DT *c, size_t size)
+void init(DT *a, IT *b, DT *c, size_t large_size, size_t small_size)
 {
     #pragma omp parallel
     {
         unsigned int myseed = omp_get_thread_num();
         #pragma omp for schedule(static)
-        for (size_t i = 0; i < size; i++)
+        for (size_t i = 0; i < large_size; i++)
         {
             a[i] = rand_r(&myseed);
-            b[i] = (int)rand_r(&myseed) % RADIUS_IN_ELEMENTS;
+            b[i] = (int)rand_r(&myseed) % small_size;
         }
 
         #pragma omp for schedule(static)
-        for (size_t i = 0; i < RADIUS_IN_ELEMENTS; i++)
+        for (size_t i = 0; i < small_size; i++)
         {
             c[i] = rand_r(&myseed);
         }

@@ -25,31 +25,17 @@ endif
 
 all: create_folders
 
-euclidean_norm: create_folders euclidean_norm.o
-	$(ARCH_COMPILER) object_files/euclidean_norm.o $(Library_Path) $(Libraries) -o ./bin/euclidean_norm$(ArchSuffix)
+%_ker: %_k.o create_folders
+	$(ARCH_COMPILER) object_files/$< $(Library_Path) $(Libraries) -o ./bin/$@$(ArchSuffix)
 
-spmv: create_folders spmv.o
-	$(ARCH_COMPILER) object_files/spmv.o $(Library_Path) $(Libraries) -o ./bin/spmv$(ArchSuffix)
+%_alg: %_a.o create_folders
+	$(ARCH_COMPILER) object_files/$< $(Library_Path) $(Libraries) -o ./bin/$@$(ArchSuffix)
 
-l1_bandwidth: create_folders l1_bandwidth.o
-	$(ARCH_COMPILER) object_files/l1_bandwidth.o $(Library_Path) $(Libraries) -o ./bin/l1_bandwidth$(ArchSuffix)
+%_k.o: kernels/%/main.cpp
+	$(ARCH_COMPILER) $(Flags) $(Include_Path)  -c $< -o object_files/$@
 
-gather: create_folders gather.o
-	$(ARCH_COMPILER) object_files/gather.o $(Library_Path) $(Libraries) -o ./bin/gather$(ArchSuffix)
-
-
-spmv.o: algorithms/spmv/spmv_main.cpp
-	$(ARCH_COMPILER) $(Flags) $(Include_Path)  -c algorithms/spmv/spmv_main.cpp -o object_files/spmv.o
-
-euclidean_norm.o: algorithms/euclidean_norm/euclidean_norm_main.cpp
-	$(ARCH_COMPILER) $(Flags) $(Include_Path)  -c algorithms/euclidean_norm/euclidean_norm_main.cpp -o object_files/euclidean_norm.o
-
-l1_bandwidth.o: kernels/l1_bandwidth/l1_bandwidth_main.cpp
-	$(ARCH_COMPILER) $(Flags) $(Include_Path)  -c kernels/l1_bandwidth/l1_bandwidth_main.cpp -o object_files/l1_bandwidth.o
-
-gather.o: kernels/gather/gather_main.cpp
-	$(ARCH_COMPILER) $(Flags) $(Include_Path)  -c kernels/gather/gather_main.cpp -o object_files/gather.o
-
+%_a.o: algorithms/%/main.cpp
+	$(ARCH_COMPILER) $(Flags) $(Include_Path)  -c $< -o object_files/$@
 
 create_folders:
 	-mkdir -p ./bin

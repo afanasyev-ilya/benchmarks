@@ -1,5 +1,5 @@
 #include "common/lib.h"
-#include "euclidean_norm.h"
+#include "norm.h"
 
 typedef double base_type;
 

@@ -4,7 +4,7 @@ typedef float base_type;
 
 #define INNER_LOADS 16
 
-#include "l1_bandwidth.h"
+#include "L1_bandwidth.h"
 
 #ifdef __USE_INTEL__
 #define SIMD_SIZE 512
