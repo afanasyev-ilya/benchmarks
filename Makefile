@@ -1,11 +1,7 @@
 COMPILER=$(CXX)
 
 ifeq ($(COMPILER),g++)
-	ifeq ($(MPI), true)
-		ARCH_COMPILER=mpicxx
-	else
-		ARCH_COMPILER=g++
-	endif
+	ARCH_COMPILER=g++
 	Include_Path = -I ./
 
 	ifeq ($(ARCH),kunpeng)
@@ -18,7 +14,18 @@ ifeq ($(COMPILER),g++)
 
   	Libraries = -fopenmp
   	Library_Path =
-    ArchSuffix=_mc
+endif
+
+ifeq ($(COMPILER),icpc)
+	ARCH_COMPILER=icpc
+	Include_Path = -I ./
+
+    ifeq ($(ARCH),intel)
+        Flags = -D __USE_INTEL__ -O2 -std=c++17 -D NOFUNCCALL -qopt-report=1 -qopt-report-phase=vec -qopenmp -ffreestanding -qopt-streaming-stores=always -xCOMMON-AVX512
+    endif
+
+  	Libraries = -fopenmp
+  	Library_Path =
 endif
 
 .DEFAULT_GOAL := all
@@ -26,10 +33,10 @@ endif
 all: create_folders
 
 %_ker: %_k.o create_folders
-	$(ARCH_COMPILER) object_files/$< $(Library_Path) $(Libraries) -o ./bin/$@$(ArchSuffix)
+	$(ARCH_COMPILER) object_files/$< $(Library_Path) $(Libraries) -o ./bin/$@
 
 %_alg: %_a.o create_folders
-	$(ARCH_COMPILER) object_files/$< $(Library_Path) $(Libraries) -o ./bin/$@$(ArchSuffix)
+	$(ARCH_COMPILER) object_files/$< $(Library_Path) $(Libraries) -o ./bin/$@
 
 %_k.o: kernels/%/main.cpp
 	$(ARCH_COMPILER) $(Flags) $(Include_Path)  -c $< -o object_files/$@
