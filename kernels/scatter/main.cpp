@@ -3,7 +3,7 @@
 typedef double base_type;
 typedef int index_type;
 
-#include "gather.h"
+#include "scatter.h"
 
 void call_kernel(Parser &_parser)
 {

@@ -30,7 +30,11 @@ endif
 
 .DEFAULT_GOAL := all
 
-all: create_folders
+all: create_folders kernels algorithms
+
+kernels: scatter_ker gather_ker L1_bandwidth_ker
+
+algorithms: spmv_alg
 
 %_ker: %_k.o create_folders
 	$(ARCH_COMPILER) object_files/$< $(Library_Path) $(Libraries) -o ./bin/$@

@@ -20,13 +20,29 @@ exec_params = {"gather_ker": {"length": "3GB",
                                "max_small_size": "512MB"}}
 
 
-def run_benchmarks(benchmarks_list):
+def run_benchmarks(benchmarks_list, options):
     for benchmark_name in benchmarks_list:
         if benchmark_name == "gather_ker" or benchmark_name == "scatter_ker":
-            benchmark_gather_scatter(benchmark_name, exec_params[benchmark_name])
+            benchmark_gather_scatter(benchmark_name, exec_params[benchmark_name], options)
 
 
-def benchmark_gather_scatter(benchmark_name, benchmark_parameters):
+def run_and_wait(cmd, options):
+    print("Running " + cmd)
+    #my_env = os.environ.copy()
+    #my_env["OMP_NUM_THREADS"] = options.threads
+    #my_env["OMP_PROC_BIND"] = "close"
+    p = subprocess.Popen(cmd, shell=True, #env=my_env,
+                         stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    output, err = p.communicate()
+    rc = p.returncode
+    p_status = p.wait()
+    string_output = output.decode("utf-8")
+    return string_output
+
+
+def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options):
     cur_small_size = 1024
     sizes = []
     bandwidths = []
@@ -36,15 +52,7 @@ def benchmark_gather_scatter(benchmark_name, benchmark_parameters):
 
         cmd = "./bin/" + benchmark_name + " -small-size " + formatted_small_size + " -large-size " +\
               formatted_large_size
-        print("Running " + cmd)
-        p = subprocess.Popen(cmd, shell=True,
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        output, err = p.communicate()
-        rc = p.returncode
-        p_status = p.wait()
-        string_output = output.decode("utf-8")
+        string_output = run_and_wait(cmd, options)
         timings = parse_timings(string_output)
 
         sizes.append(formatted_small_size)
@@ -69,8 +77,8 @@ if __name__ == "__main__":
     parser.add_option('-c', '--compiler',
                       action="store", dest="compiler",
                       help="specify compiler used", default="g++")
-    parser.add_option('-t', '--threads-num',
-                      action="store", dest="thread_num",
+    parser.add_option('-t', '--threads',
+                      action="store", dest="threads",
                       help="specify thread number", default=None)
 
     options, args = parser.parse_args()
@@ -80,4 +88,4 @@ if __name__ == "__main__":
         benchmarks_list = exec_params.keys()
     else:
         benchmarks_list = options.bench.split(",")
-    run_benchmarks(benchmarks_list)
+    run_benchmarks(benchmarks_list, options)
