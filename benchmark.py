@@ -17,21 +17,25 @@ exec_params = {"gather_ker": {"length": "3GB",
                               "max_small_size": "512MB"},
                "scatter_ker": {"length": "3GB",
                                "min_small_size": "1KB",
-                               "max_small_size": "512MB"}}
+                               "max_small_size": "512MB"},
+               "fma_ker": {}}
 
 
 def run_benchmarks(benchmarks_list, options):
     for benchmark_name in benchmarks_list:
         if benchmark_name == "gather_ker" or benchmark_name == "scatter_ker":
             benchmark_gather_scatter(benchmark_name, exec_params[benchmark_name], options)
+        else:
+            generic_benchmark(benchmark_name, exec_params[benchmark_name], options)
 
 
 def run_and_wait(cmd, options):
     print("Running " + cmd)
-    #my_env = os.environ.copy()
-    #my_env["OMP_NUM_THREADS"] = options.threads
-    #my_env["OMP_PROC_BIND"] = "close"
-    p = subprocess.Popen(cmd, shell=True, #env=my_env,
+    my_env = os.environ.copy()
+    my_env["OMP_NUM_THREADS"] = options.threads
+    my_env["OMP_PROC_BIND"] = "close"
+    os.environ['OMP_NUM_THREADS'] = str(options.threads)
+    p = subprocess.Popen(cmd, shell=True, env=my_env,
                          stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
@@ -40,6 +44,12 @@ def run_and_wait(cmd, options):
     p_status = p.wait()
     string_output = output.decode("utf-8")
     return string_output
+
+
+def generic_benchmark(benchmark_name, benchmark_parameters, options):
+    cmd = "./bin/" + benchmark_name
+    string_output = run_and_wait(cmd, options)
+    print(string_output)
 
 
 def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options):

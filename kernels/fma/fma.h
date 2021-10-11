@@ -113,10 +113,10 @@ void kernel_basic(DT *in_data, DT *out_data, size_t size)
             fma(reg4, reg3);
             fma(reg4, reg4);
 
-            store(reg1, &out_data[i]);
-            store(reg2, &out_data[i + SIMD_SIZE*1]);
-            store(reg3, &out_data[i + SIMD_SIZE*2]);
-            store(reg4, &out_data[i + SIMD_SIZE*3]);
+            store(reg1, &in_data[i]);
+            store(reg2, &in_data[i + SIMD_SIZE*1]);
+            store(reg3, &in_data[i + SIMD_SIZE*2]);
+            store(reg4, &in_data[i + SIMD_SIZE*3]);
         }
     };
 }
@@ -163,10 +163,10 @@ void kernel_optimized(DT *in_data, DT *out_data, size_t size)
             reg4 = _mm512_fmadd_ps(reg4, reg3, reg4);
             reg4 = _mm512_fmadd_ps(reg4, reg4, reg4);
 
-            _mm512_storeu_ps (&out_data[i], reg1);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*1], reg2);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*2], reg3);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*3], reg4);
+            _mm512_storeu_ps (&in_data[i], reg1);
+            _mm512_storeu_ps (&in_data[i + SIMD_SIZE*1], reg2);
+            _mm512_storeu_ps (&in_data[i + SIMD_SIZE*2], reg3);
+            _mm512_storeu_ps (&in_data[i + SIMD_SIZE*3], reg4);
         }
     };
 }
@@ -177,10 +177,12 @@ void kernel(int mode, DT *in_data, DT *out_data, size_t size)
 {
     if(mode == 0)
     {
-        kernel_basic(in_data, out_data, size);
+        for(int i = 0; i < 1000; i++)
+            kernel_basic(in_data, out_data, size);
     }
     else if(mode == 1)
     {
-        kernel_optimized(in_data, out_data, size);
+        for(int i = 0; i < 1000; i++)
+            kernel_optimized(in_data, out_data, size);
     }
 }

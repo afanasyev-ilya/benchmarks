@@ -18,6 +18,7 @@
 
 using namespace std;
 
+#include "helpers.h"
 #include "timer/timer.h"
 #include "cmd_parser/cmd_parser.h"
 #include "performance_counter/performance_counter.h"
