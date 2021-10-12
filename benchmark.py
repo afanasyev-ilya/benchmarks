@@ -47,9 +47,13 @@ def run_and_wait(cmd, options):
 
 
 def generic_benchmark(benchmark_name, benchmark_parameters, options):
-    cmd = "./bin/" + benchmark_name
+    cmd = "./bin/" + benchmark_name + " -mode 0"
     string_output = run_and_wait(cmd, options)
-    print(string_output)
+    print(parse_timings(string_output))
+
+    cmd = "./bin/" + benchmark_name + " -mode 1"
+    string_output = run_and_wait(cmd, options)
+    print(parse_timings(string_output))
 
 
 def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options):

@@ -6,7 +6,7 @@ typedef float base_type;
 
 void call_kernel(Parser &_parser)
 {
-    size_t size = 64*1024;
+    size_t size = 1024*1024;
 
     print_size("size", size*sizeof(base_type));
 
@@ -16,8 +16,8 @@ void call_kernel(Parser &_parser)
     MemoryAPI::allocate_array(&out_data, size);
 
     #ifndef METRIC_RUN
-    size_t bytes_requested = ((size_t)size) * (2 * sizeof(base_type))*1000;
-    size_t flops_requested = size*16*2*1000;
+    size_t bytes_requested = ((size_t)size) * (2/*since 2 arrays*/ * sizeof(base_type));
+    size_t flops_requested = size*NUM_VECTORS*INNER_FMA_ITERATIONS * 2 /*since FMA*/;
     auto counter = PerformanceCounter(bytes_requested, flops_requested);
     #endif
 

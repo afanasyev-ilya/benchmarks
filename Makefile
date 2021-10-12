@@ -21,7 +21,7 @@ ifeq ($(COMPILER),icpc)
 	Include_Path = -I ./
 
     ifeq ($(ARCH),intel)
-        Flags = -D __USE_INTEL__ -O2 -std=c++17 -D NOFUNCCALL -qopt-report=1 -qopt-report-phase=vec -qopenmp -ffreestanding -qopt-streaming-stores=always -xCOMMON-AVX512
+        Flags = -D __USE_INTEL__ -O2 -std=c++17 -D NOFUNCCALL -qopt-report=1 -qopt-report-phase=vec -qopenmp -ffreestanding -qopt-streaming-stores=always -xCORE-AVX512
     endif
 
   	Libraries = -fopenmp
