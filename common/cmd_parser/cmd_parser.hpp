@@ -14,6 +14,7 @@ Parser::Parser()
     large_size = 100;
 
     datatype = __FLOAT__;
+    opt_mode = GENERIC;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,6 +73,16 @@ void Parser::parse_args(int _argc, char **_argv)
         if ((option.compare("-s") == 0) || (option.compare("-size") == 0))
         {
             size = atoi(_argv[++i]);
+        }
+
+        if ((option.compare("-opt-mode") == 0))
+        {
+            string opt_str = _argv[++i];
+            if(opt_str == "opt" || opt_str == "optimized")
+                opt_mode = OPTIMIZED;
+
+            if(opt_str == "gen" || opt_str == "generic")
+                opt_mode = GENERIC;
         }
 
         if ((option.compare("-dt") == 0) || (option.compare("-datatype") == 0))

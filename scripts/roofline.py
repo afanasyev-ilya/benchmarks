@@ -12,19 +12,34 @@ last_band = "L1"
 last_perf = "float_vector_FMA"
 
 kunpeng_characteristics = {"bandwidths": {"DRAM": 187, "L3": 1060, "L2": 1800, "L1": 2200},
-                                         "peak_performances": {"float_no_vector_noFMA": 124,
-                                                               "float_vector_noFMA": 499,
-                                                               "float_vector_FMA": 1996}}  # GFLOP/s
+                           "peak_performances": {"float_no_vector_noFMA": 124,
+                                                 "float_vector_noFMA": 499,
+                                                 "float_vector_FMA": 1996}}  # GFLOP/s
 
-intel_xeon_characteristics = {"bandwidths": {"DRAM": 127, "L3": 1, "L2": 1, "L1": 1},
-                              "peak_performances": {"float_no_vector_noFMA": 1,
-                                                 "float_vector_noFMA": 1,
-                                                 "float_vector_FMA": 1}}  # GFLOP/s
+platform_specs = {
+    "intel_xeon_6140": {"bandwidths": {"DRAM": 127, "L3": 1300, "L2": 3800, "L1": 5800},
+                        "peak_performances": {"scalar": 82,
+                                              "double": 1320,
+                                              "float": 2649}},
+    "kunpeng_920_64_core": {"bandwidths": {"DRAM": 187, "L3": 1397, "L2": 4163, "L1": 7500},
+                            "peak_performances": {"scalar": 332,
+                                                  "double": 660,
+                                                  "float": 1331}},
+    "unknown": {"bandwidths": {"DRAM": 100, "L3": 200, "L2": 250, "L1": 500},
+                "peak_performances": {"scalar": 10,
+                                      "double": 50,
+                                      "float": 100}}
+}
+
+intel_xeon_6140_characteristics = {"bandwidths": {"DRAM": 127, "L3": 1, "L2": 1, "L1": 1},
+                                   "peak_performances": {"scalar": 82,
+                                                         "double": 1320,
+                                                         "float": 2649}}  # GFLOP/s
 
 amd_epyc_characteristics = {"bandwidths": {"DRAM": 204, "L3": 1, "L2": 1, "L1": 1},
                             "peak_performances": {"float_no_vector_noFMA": 1,
-                                                    "float_vector_noFMA": 1,
-                                                    "float_vector_FMA": 1}}  # GFLOP/s
+                                                  "float_vector_noFMA": 1,
+                                                  "float_vector_FMA": 1}}  # GFLOP/s
 
 x_data_first = 1.0 / 256.0
 x_data_last = 1024
@@ -49,7 +64,7 @@ class RooflinePlotter:
         while current <= x_max:
             x_array.append(current)
             prev = current
-            current += 0.1 # TODO 0.01
+            current += 0.1  # TODO 0.01
 
         return x_array
 
@@ -59,7 +74,7 @@ class RooflinePlotter:
 
         max_band = self.platform_characteristics["bandwidths"][last_band]
         max_perf = self.platform_characteristics["peak_performances"][last_perf]
-        x_intersection = max_perf/max_band
+        x_intersection = max_perf / max_band
 
         for perf_key in self.platform_characteristics["peak_performances"]:
             y_data = []
@@ -68,8 +83,8 @@ class RooflinePlotter:
                 y_data.append(cur_perf)
             data.append(go.Scatter(x=x_data, y=y_data, mode="lines", name=str(perf_key),
                                    text=[perf_key], showlegend=False))
-            x_data_name=[x_intersection]
-            y_data_name=[cur_perf]
+            x_data_name = [x_intersection]
+            y_data_name = [cur_perf]
             data.append(go.Scatter(x=x_data_name, y=y_data_name, mode="lines+text", name=str(perf_key),
                                    text=[perf_key], textposition="top right", showlegend=False))
 
@@ -82,7 +97,7 @@ class RooflinePlotter:
                     y_data.append(self.get_bandwidth_roof(x, cur_band))
             data.append(go.Scatter(x=x_data, y=y_data, mode="lines", name=str(mem_key), text=[mem_key],
                                    showlegend=False))
-            x_data_name = [(x_intersection - x_data_first)/64 + x_data_first]
+            x_data_name = [(x_intersection - x_data_first) / 64 + x_data_first]
             y_data_name = [self.get_bandwidth_roof(x_data_name[0], cur_band)]
             data.append(go.Scatter(x=x_data_name, y=y_data_name, mode="lines+text", name=str(mem_key), text=[mem_key],
                                    textposition="top center", showlegend=False))
@@ -103,7 +118,8 @@ class RooflinePlotter:
         perf_key = "float_no_vector_noFMA"
 
         min_distance = self.platform_characteristics["peak_performances"][perf_key]
-        roof_val = self.get_compute_roof(self.platform_characteristics["bandwidths"][mem_key], x, "float_no_vector_noFMA") # TODO
+        roof_val = self.get_compute_roof(self.platform_characteristics["bandwidths"][mem_key], x,
+                                         "float_no_vector_noFMA")  # TODO
         if roof_val >= top_roof_val:
             top_roof_val = roof_val
             top_roof_name = mem_key
@@ -149,7 +165,7 @@ class RooflinePlotter:
         return additional_x_points
 
     def draw_plot(self, profiling_data_array, sockets):
-        profiling_points_x_data = [] #self.get_profiling_points_x_data(profiling_data_array)
+        profiling_points_x_data = []  # self.get_profiling_points_x_data(profiling_data_array)
         plots_data = self.generate_CARM_roof_plots(profiling_points_x_data)
 
         for profiling_data in profiling_data_array:
@@ -162,8 +178,8 @@ class RooflinePlotter:
         yaxis = dict(autorange=True, showgrid=True, zeroline=True, showline=True, ticks='',
                      showticklabels=True, type='log', title=y_title)
 
-        current_file_name='./../benchmarks_new/output/roofline_'+sockets+'.html'
-        #current_file_name = 'roofline_' + sockets + '.html'
+        current_file_name = './../benchmarks_new/output/roofline_' + sockets + '.html'
+        # current_file_name = 'roofline_' + sockets + '.html'
         plotly.offline.plot({
             "data": plots_data,
             "layout": go.Layout(title=self.name, xaxis=xaxis, yaxis=yaxis)
@@ -195,5 +211,3 @@ def generate_roofline_from_profiling_data(file_name, roofline_name):
     # initialize and draw roofline
     roofline = RooflinePlotter(roofline_name, platform_characteristics)
     roofline.draw_plot(profiling_data, "single_socket")
-
-

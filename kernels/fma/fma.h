@@ -168,7 +168,8 @@ fma(reg6, reg6, reg, reg);        \
 fma(reg7, reg7, reg, reg);        \
 fma(reg8, reg8, reg, reg);        \
 
-#define AVX_FMA_GROUP_S(reg) \
+#ifdef __USE_AVX_512__
+#define AVX_512_FMA_GROUP_S(reg) \
 reg1 = _mm512_fmadd_ps(reg1, reg, reg);\
 reg2 = _mm512_fmadd_ps(reg2, reg, reg);\
 reg3 = _mm512_fmadd_ps(reg3, reg, reg);\
@@ -176,9 +177,9 @@ reg4 = _mm512_fmadd_ps(reg4, reg, reg);\
 reg5 = _mm512_fmadd_ps(reg5, reg, reg);\
 reg6 = _mm512_fmadd_ps(reg6, reg, reg);\
 reg7 = _mm512_fmadd_ps(reg7, reg, reg);\
-reg8 = _mm512_fmadd_ps(reg8, reg, reg);\
+reg8 = _mm512_fmadd_ps(reg8, reg, reg);
 
-#define AVX_FMA_GROUP_D(reg) \
+#define AVX_512_FMA_GROUP_D(reg) \
 reg1 = _mm512_fmadd_pd(reg1, reg, reg);\
 reg2 = _mm512_fmadd_pd(reg2, reg, reg);\
 reg3 = _mm512_fmadd_pd(reg3, reg, reg);\
@@ -186,7 +187,30 @@ reg4 = _mm512_fmadd_pd(reg4, reg, reg);\
 reg5 = _mm512_fmadd_pd(reg5, reg, reg);\
 reg6 = _mm512_fmadd_pd(reg6, reg, reg);\
 reg7 = _mm512_fmadd_pd(reg7, reg, reg);\
-reg8 = _mm512_fmadd_pd(reg8, reg, reg);\
+reg8 = _mm512_fmadd_pd(reg8, reg, reg);
+#endif
+
+#ifdef __USE_ARM_NEON__
+#define ARM_NEON_FMA_GROUP_S(reg) \
+reg1 = vfmaq_laneq_f32(reg1, reg, reg, 0);\
+reg2 = vfmaq_laneq_f32(reg2, reg, reg, 0);\
+reg3 = vfmaq_laneq_f32(reg3, reg, reg, 0);\
+reg4 = vfmaq_laneq_f32(reg4, reg, reg, 0);\
+reg5 = vfmaq_laneq_f32(reg5, reg, reg, 0);\
+reg6 = vfmaq_laneq_f32(reg6, reg, reg, 0);\
+reg7 = vfmaq_laneq_f32(reg7, reg, reg, 0);\
+reg8 = vfmaq_laneq_f32(reg8, reg, reg, 0);
+
+#define ARM_NEON_FMA_GROUP_D(reg) \
+reg1 = vfmaq_laneq_f32(reg1, reg, reg, 0);\
+reg2 = vfmaq_laneq_f32(reg2, reg, reg, 0);\
+reg3 = vfmaq_laneq_f32(reg3, reg, reg, 0);\
+reg4 = vfmaq_laneq_f32(reg4, reg, reg, 0);\
+reg5 = vfmaq_laneq_f32(reg5, reg, reg, 0);\
+reg6 = vfmaq_laneq_f32(reg6, reg, reg, 0);\
+reg7 = vfmaq_laneq_f32(reg7, reg, reg, 0);\
+reg8 = vfmaq_laneq_f32(reg8, reg, reg, 0);
+#endif
 
 template<typename DT, int SIMD_SIZE>
 void kernel_basic(DT *in_data, DT *out_data, size_t size)
@@ -303,14 +327,14 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
                 reg7_old = reg7;
                 reg8_old = reg8;
 
-                AVX_FMA_GROUP_S(reg1_old)
-                AVX_FMA_GROUP_S(reg2_old)
-                AVX_FMA_GROUP_S(reg3_old)
-                AVX_FMA_GROUP_S(reg4_old)
-                AVX_FMA_GROUP_S(reg5_old)
-                AVX_FMA_GROUP_S(reg6_old)
-                AVX_FMA_GROUP_S(reg7_old)
-                AVX_FMA_GROUP_S(reg8_old)
+                AVX_512_FMA_GROUP_S(reg1_old)
+                AVX_512_FMA_GROUP_S(reg2_old)
+                AVX_512_FMA_GROUP_S(reg3_old)
+                AVX_512_FMA_GROUP_S(reg4_old)
+                AVX_512_FMA_GROUP_S(reg5_old)
+                AVX_512_FMA_GROUP_S(reg6_old)
+                AVX_512_FMA_GROUP_S(reg7_old)
+                AVX_512_FMA_GROUP_S(reg8_old)
             }
 
             _mm512_storeu_ps (&out_data[i + SIMD_SIZE_S*0], reg1);
@@ -370,14 +394,14 @@ void kernel_asm(double *in_data, double *out_data, size_t size)
                 reg7_old = reg7;
                 reg8_old = reg8;
 
-                AVX_FMA_GROUP_D(reg1_old)
-                AVX_FMA_GROUP_D(reg2_old)
-                AVX_FMA_GROUP_D(reg3_old)
-                AVX_FMA_GROUP_D(reg4_old)
-                AVX_FMA_GROUP_D(reg5_old)
-                AVX_FMA_GROUP_D(reg6_old)
-                AVX_FMA_GROUP_D(reg7_old)
-                AVX_FMA_GROUP_D(reg8_old)
+                AVX_512_FMA_GROUP_D(reg1_old)
+                AVX_512_FMA_GROUP_D(reg2_old)
+                AVX_512_FMA_GROUP_D(reg3_old)
+                AVX_512_FMA_GROUP_D(reg4_old)
+                AVX_512_FMA_GROUP_D(reg5_old)
+                AVX_512_FMA_GROUP_D(reg6_old)
+                AVX_512_FMA_GROUP_D(reg7_old)
+                AVX_512_FMA_GROUP_D(reg8_old)
             }
 
             _mm512_storeu_pd (&out_data[i + SIMD_SIZE_D*0], reg1);
@@ -395,8 +419,59 @@ void kernel_asm(double *in_data, double *out_data, size_t size)
 
 
 #ifdef __USE_KUNPENG_920__
-template<typename DT>
-void kernel_asm(DT *in_data, DT *out_data, size_t size)
+void kernel_asm(float *in_data, float *out_data, size_t size)
+{
+    #pragma omp parallel
+    {
+        float32x4_t reg1, reg2, reg3, reg4, reg5, reg6, reg7, reg8;
+        float32x4_t reg1_old, reg2_old, reg3_old, reg4_old, reg5_old, reg6_old, reg7_old, reg8_old;
+
+        #pragma omp for schedule(static)
+        for (size_t i = 0; i < size; i += NUM_VECTORS*SIMD_SIZE_D)
+        {
+            reg1 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*0]));
+            reg2 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*1]));
+            reg3 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*2]));
+            reg4 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*3]));
+            reg5 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*4]));
+            reg6 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*5]));
+            reg7 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*6]));
+            reg8 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*7]));
+
+            for(int step = 0; step < INNER_FMA_ITERATIONS; step++)
+            {
+                reg1_old = reg1;
+                reg2_old = reg2;
+                reg3_old = reg3;
+                reg4_old = reg4;
+                reg5_old = reg5;
+                reg6_old = reg6;
+                reg7_old = reg7;
+                reg8_old = reg8;
+
+                ARM_NEON_FMA_GROUP_S(reg1_old)
+                ARM_NEON_FMA_GROUP_S(reg2_old)
+                ARM_NEON_FMA_GROUP_S(reg3_old)
+                ARM_NEON_FMA_GROUP_S(reg4_old)
+                ARM_NEON_FMA_GROUP_S(reg5_old)
+                ARM_NEON_FMA_GROUP_S(reg6_old)
+                ARM_NEON_FMA_GROUP_S(reg7_old)
+                ARM_NEON_FMA_GROUP_S(reg8_old)
+            }
+
+            vst1q_f32 (&out_data[i + SIMD_SIZE_D*0], reg1);
+            vst1q_f32 (&out_data[i + SIMD_SIZE_D*1], reg2);
+            vst1q_f32 (&out_data[i + SIMD_SIZE_D*2], reg3);
+            vst1q_f32 (&out_data[i + SIMD_SIZE_D*3], reg4);
+            vst1q_f32 (&out_data[i + SIMD_SIZE_D*4], reg5);
+            vst1q_f32 (&out_data[i + SIMD_SIZE_D*5], reg6);
+            vst1q_f32 (&out_data[i + SIMD_SIZE_D*6], reg7);
+            vst1q_f32 (&out_data[i + SIMD_SIZE_D*7], reg8);
+        }
+    }
+}
+
+void kernel_asm(double *in_data, double *out_data, size_t size)
 {
 
 }
@@ -404,13 +479,13 @@ void kernel_asm(DT *in_data, DT *out_data, size_t size)
 
 
 template<typename DT, int SIMD_SIZE>
-void kernel(int mode, DT *in_data, DT *out_data, size_t size)
+void kernel(OPT_MODE mode, DT *in_data, DT *out_data, size_t size)
 {
-    if(mode == 0)
+    if(mode == GENERIC)
     {
         kernel_basic<DT, SIMD_SIZE>(in_data, out_data, size);
     }
-    else if(mode == 1)
+    else if(mode == OPTIMIZED)
     {
         kernel_asm(in_data, out_data, size);
     }

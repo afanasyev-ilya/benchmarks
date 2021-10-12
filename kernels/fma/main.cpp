@@ -4,11 +4,13 @@
 #define NUM_VECTORS 8
 
 #ifdef __USE_INTEL__
+#define __USE_AVX_512__
 #define SIMD_SIZE_S 16
 #define SIMD_SIZE_D 8
 #endif
 
 #ifdef __USE_KUNPENG_920__
+#define __USE_ARM_NEON__
 #define SIMD_SIZE_S 4
 #define SIMD_SIZE_D 2
 #endif
@@ -37,7 +39,7 @@ void call_kernel_s(Parser &_parser)
     for(int i = 0; i < 10; i++) // heat runs
     {
         re_init(in_data, out_data, size);
-        kernel<float, SIMD_SIZE_S>(_parser.get_mode(), in_data, out_data, size);
+        kernel<float, SIMD_SIZE_S>(_parser.get_opt_mode(), in_data, out_data, size);
     }
 
     for(int i = 0; i < iterations; i++)
@@ -45,7 +47,7 @@ void call_kernel_s(Parser &_parser)
         counter.start_timing();
         re_init(in_data, out_data, size);
 
-        kernel<float, SIMD_SIZE_S>(_parser.get_mode(), in_data, out_data, size);
+        kernel<float, SIMD_SIZE_S>(_parser.get_opt_mode(), in_data, out_data, size);
 
         counter.end_timing();
         counter.update_counters();
@@ -79,7 +81,7 @@ void call_kernel_d(Parser &_parser)
     for(int i = 0; i < 10; i++) // heat runs
     {
         re_init(in_data, out_data, size);
-        kernel<double, SIMD_SIZE_D>(_parser.get_mode(), in_data, out_data, size);
+        kernel<double, SIMD_SIZE_D>(_parser.get_opt_mode(), in_data, out_data, size);
     }
 
     for(int i = 0; i < iterations; i++)
@@ -87,7 +89,7 @@ void call_kernel_d(Parser &_parser)
         counter.start_timing();
         re_init(in_data, out_data, size);
 
-        kernel<double, SIMD_SIZE_D>(_parser.get_mode(), in_data, out_data, size);
+        kernel<double, SIMD_SIZE_D>(_parser.get_opt_mode(), in_data, out_data, size);
 
         counter.end_timing();
         counter.update_counters();

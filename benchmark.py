@@ -2,7 +2,7 @@ import os
 import optparse
 import shutil
 import subprocess
-from scripts.roofline import kunpeng_characteristics,intel_xeon_characteristics,amd_epyc_characteristics
+from scripts.roofline import platform_specs
 from scripts.helpers import sizeof_fmt,parse_timings
 from scripts.plot import plot_gather_or_scatter
 
@@ -18,24 +18,26 @@ exec_params = {"gather_ker": {"length": "3GB",
                "scatter_ker": {"length": "3GB",
                                "min_small_size": "1KB",
                                "max_small_size": "512MB"},
-               "fma_ker": {}}
+               "fma_ker": [" -opt-mode gen -datatype flt",
+                           " -opt-mode gen -datatype dbl",
+                           " -opt-mode opt -datatype flt",
+                           " -opt-mode opt -datatype dbl"]}
 
 
 def run_benchmarks(benchmarks_list, options):
     for benchmark_name in benchmarks_list:
         if benchmark_name == "gather_ker" or benchmark_name == "scatter_ker":
             benchmark_gather_scatter(benchmark_name, exec_params[benchmark_name], options)
+        elif benchmark_name == "fma_ker":
+            fma_benchmark(benchmark_name, exec_params[benchmark_name], options)
         else:
             generic_benchmark(benchmark_name, exec_params[benchmark_name], options)
 
 
 def run_and_wait(cmd, options):
     print("Running " + cmd)
-    my_env = os.environ.copy()
-    my_env["OMP_NUM_THREADS"] = options.threads
-    my_env["OMP_PROC_BIND"] = "close"
     os.environ['OMP_NUM_THREADS'] = str(options.threads)
-    p = subprocess.Popen(cmd, shell=True, env=my_env,
+    p = subprocess.Popen(cmd, shell=True,
                          stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
@@ -47,13 +49,39 @@ def run_and_wait(cmd, options):
 
 
 def generic_benchmark(benchmark_name, benchmark_parameters, options):
-    cmd = "./bin/" + benchmark_name + " -mode 0"
+    cmd = "./bin/" + benchmark_name
     string_output = run_and_wait(cmd, options)
     print(parse_timings(string_output))
 
     cmd = "./bin/" + benchmark_name + " -mode 1"
     string_output = run_and_wait(cmd, options)
     print(parse_timings(string_output))
+
+
+def fma_benchmark(benchmark_name, benchmark_parameters, options):
+    flops = []
+    for params in benchmark_parameters:
+        cmd = "./bin/" + benchmark_name + " " + params
+        string_output = run_and_wait(cmd, options)
+        timings = parse_timings(string_output)
+        flops.append(timings["avg_flops"])
+
+    print(flops)
+    peak_values = platform_specs[options.target_name]
+    max_flt_flops = max(flops[0], flops[2])
+    max_dbl_flops = max(flops[1], flops[3])
+    if flops[0] < flops[2]:
+        print("Performance on optimized version is " + str("{:.1f}".format(flops[2]/flops[0])) +
+              " times higher for floats.");
+    if flops[1] < flops[3]:
+        print("Performance on optimized version is " + str("{:.1f}".format(flops[1]/flops[3])) +
+              " times higher for double.");
+    print("SUSTAINED PERFORMANCE on FLOATS: " + str("{:.1f}".format(max_flt_flops)) + " GFLOP/s, " +
+          str("{:.1f}".format(100.0*max_flt_flops/peak_values["peak_performances"]["float"])) + "% of peak[" +
+          str(peak_values["peak_performances"]["float"]) + " GFLOP/s]")
+    print("SUSTAINED PERFORMANCE on DOUBLES: " + str("{:.1f}".format(max_dbl_flops)) + " GFLOP/s, " +
+          str("{:.1f}".format(100.0*max_dbl_flops/peak_values["peak_performances"]["double"])) + "% of peak[" +
+          str(peak_values["peak_performances"]["double"]) + " GFLOP/s]")
 
 
 def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options):
@@ -94,8 +122,15 @@ if __name__ == "__main__":
     parser.add_option('-t', '--threads',
                       action="store", dest="threads",
                       help="specify thread number", default=None)
+    parser.add_option('-n', '--target',
+                      action="store", dest="target_name",
+                      help="specify thread number", default="unknown")
 
     options, args = parser.parse_args()
+
+    if options.target_name not in platform_specs:
+        print("Unsupported target platform. Please add its's specifications into roofline.py")
+        exit()
 
     benchmarks_list = []
     if options.bench == "all":

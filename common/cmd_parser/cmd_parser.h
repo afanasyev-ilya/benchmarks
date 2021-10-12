@@ -6,6 +6,13 @@ enum DATATYPE_USED
     __DOUBLE__ = 1
 };
 
+enum OPT_MODE
+{
+    GENERIC = 0,
+    OPTIMIZED = 1
+};
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Parser
@@ -21,6 +28,7 @@ private:
     int large_size;
 
     DATATYPE_USED datatype;
+    OPT_MODE opt_mode;
 
     size_t length;
 public:
@@ -36,6 +44,7 @@ public:
 
     size_t get_length() { return length; };
     DATATYPE_USED get_datatype() {return datatype;};
+    OPT_MODE get_opt_mode(){return opt_mode;};
     
     void parse_args(int _argc, char **_argv);
 };
