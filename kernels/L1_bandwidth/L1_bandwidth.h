@@ -1,7 +1,5 @@
 #include <string>
 
-#define RADIUS 1000000000
-
 #ifdef __USE_KUNPENG_920__
 #include <arm_neon.h>
 #endif 
@@ -38,15 +36,8 @@ void Init(int mode, AT *a, AT *b, AT **chunk_read, AT **chunk_write, size_t size
         {
             local_random_accesses[i] = i % (seg_size / sizeof(float) - INNER_LOADS*sizeof(float));
         }
-
-        /*int max_dif = 0;
-        for(size_t i = 0; i < RADIUS; i++)
-        {
-            if(local_random_accesses[i] > max_dif)
-                max_dif = local_random_accesses[i];
-        }
-        std::cout << "max diff: " << (max_dif * sizeof(float) / 1024) << " KB" << std::endl;*/
     }
+
     unsigned chunk_size = _2MB_ / sizeof(float);
     for (int i = 0; i < omp_get_max_threads(); i++) {
         chunk_read[i] = a + i * chunk_size;
@@ -247,6 +238,110 @@ float Kernel_read(AT **chunk, size_t cache_size)
             l_sum += temp[iter];
         }
         _mm512_storeu_ps(temp, local_sum1);
+        for (int iter = 0; iter < 16; iter++){
+            l_sum += temp[iter];
+        }
+        return_val = l_sum;
+    }
+    return return_val;
+}
+#endif
+
+#ifdef __USE_KUNPENG_920__
+template<typename AT>
+float Kernel_random_read(AT **chunk, size_t cache_size, int *random_addresses)
+{
+    float return_val = 0;
+    #pragma omp parallel
+    {
+        unsigned int thread_num = omp_get_thread_num();
+        int *local_random_addresses = &random_addresses[thread_num * RADIUS];
+        float *chunk_start = chunk[thread_num];
+        unsigned int offset = 0;
+
+        float32x4_t null = {0, 0, 0, 0};
+        float32x4_t local_sum1 = null;
+        float32x4_t local_sum2 = null;
+        float32x4_t local_sum3 = null;
+        float32x4_t local_sum4 = null;
+
+        for(int i = 0; i < RADIUS; i++)
+        {
+            int offset = local_random_addresses[i];
+            float32x4_t data1, data2, data3, data4;
+
+            data1 = vld1q_f32(chunk_start + offset + 0);
+            local_sum1 = vaddq_f32(local_sum1, data1);
+
+            data2 = vld1q_f32(chunk_start + offset + 4);
+            local_sum2 = vaddq_f32(local_sum2, data2);
+
+            data3 = vld1q_f32(chunk_start + offset + 8);
+            local_sum3 = vaddq_f32(local_sum3, data3);
+
+            data4 = vld1q_f32(chunk_start + offset + 12);
+            local_sum4 = vaddq_f32(local_sum4, data4);
+
+
+            data1 = vld1q_f32(chunk_start + offset + 16);
+            local_sum1 = vaddq_f32(local_sum1, data1);
+
+            data2 = vld1q_f32(chunk_start + offset + 20);
+            local_sum2 = vaddq_f32(local_sum2, data2);
+
+            data3 = vld1q_f32(chunk_start + offset + 24);
+            local_sum3 = vaddq_f32(local_sum3, data3);
+
+            data4 = vld1q_f32(chunk_start + offset + 28);
+            local_sum4 = vaddq_f32(local_sum4, data4);
+
+
+            data1 = vld1q_f32(chunk_start + offset + 32);
+            local_sum1 = vaddq_f32(local_sum1, data1);
+
+            data2 = vld1q_f32(chunk_start + offset + 36);
+            local_sum2 = vaddq_f32(local_sum2, data2);
+
+            data3 = vld1q_f32(chunk_start + offset + 40);
+            local_sum3 = vaddq_f32(local_sum3, data3);
+
+            data4 = vld1q_f32(chunk_start + offset + 44);
+            local_sum4 = vaddq_f32(local_sum4, data4);
+
+
+            data1 = vld1q_f32(chunk_start + offset + 48);
+            local_sum1 = vaddq_f32(local_sum1, data1);
+
+            data2 = vld1q_f32(chunk_start + offset + 52);
+            local_sum2 = vaddq_f32(local_sum2, data2);
+
+            data3 = vld1q_f32(chunk_start + offset + 56);
+            local_sum3 = vaddq_f32(local_sum3, data3);
+
+            data4 = vld1q_f32(chunk_start + offset + 60);
+            local_sum4 = vaddq_f32(local_sum4, data4);
+
+            offset += 64;
+
+            if ((offset + 64) > (_16KB_ / sizeof(float))) {
+                offset = 0;
+            }
+        }
+        float l_sum = 0;
+        float temp[4];
+        vst1q_f32(temp, local_sum1);
+        for (int iter = 0; iter < 16; iter++){
+            l_sum += temp[iter];
+        }
+        vst1q_f32(temp, local_sum2);
+        for (int iter = 0; iter < 16; iter++){
+            l_sum += temp[iter];
+        }
+        vst1q_f32(temp, local_sum3);
+        for (int iter = 0; iter < 16; iter++){
+            l_sum += temp[iter];
+        }
+        vst1q_f32(temp, local_sum4);
         for (int iter = 0; iter < 16; iter++){
             l_sum += temp[iter];
         }
@@ -764,7 +859,7 @@ float Kernel_read_no_paral_instr(AT **chunk, size_t cache_size) // Без пар
 #endif 
 
 template<typename AT>
-float Kernel(int core_type, AT **chunk_read, AT **chunk_write, size_t cache_size, int *random_accesses)
+float kernel(int core_type, AT **chunk_read, AT **chunk_write, size_t cache_size, int *random_accesses)
 {
     if(core_type == 0)
         return Kernel_read(chunk_read, _32KB_);
@@ -774,15 +869,5 @@ float Kernel(int core_type, AT **chunk_read, AT **chunk_write, size_t cache_size
         return Kernel_read_no_paral_instr(chunk_read, _32KB_);
     if(core_type == 3)
         return Kernel_random_read(chunk_read, _32KB_, random_accesses);
-
-    int first_L2 = 4;
-    if(core_type == first_L2)
-        return Kernel_read(chunk_read, _512KB_);
-    if(core_type == first_L2 + 1) // 5
-        return Kernel_read_and_write(chunk_read, chunk_write, _512KB_);
-    if(core_type == first_L2 + 2) // 6
-        return Kernel_read_no_paral_instr(chunk_read, _512KB_);
-    if(core_type == first_L2 + 3) // 7
-        return Kernel_random_read(chunk_read, _512KB_, random_accesses);
     return 0;
 }

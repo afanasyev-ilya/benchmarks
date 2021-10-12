@@ -17,7 +17,7 @@ kunpeng_characteristics = {"bandwidths": {"DRAM": 187, "L3": 1060, "L2": 1800, "
                                                  "float_vector_FMA": 1996}}  # GFLOP/s
 
 platform_specs = {
-    "intel_xeon_6140": {"bandwidths": {"DRAM": 127, "L3": 1300, "L2": 3800, "L1": 5800},
+    "intel_xeon_6140": {"bandwidths": {"DRAM": 127, "L3": 573, "L2": 1800, "L1": 18000},
                         "peak_performances": {"scalar": 82,
                                               "double": 1320,
                                               "float": 2649}},

@@ -18,14 +18,14 @@ enum OPT_MODE
 class Parser
 {
 private:
-    int radius;
+    size_t radius;
     int mode;
 
-    int size;
+    size_t size;
     int deg;
 
-    int small_size;
-    int large_size;
+    size_t small_size;
+    size_t large_size;
 
     DATATYPE_USED datatype;
     OPT_MODE opt_mode;
@@ -33,14 +33,14 @@ private:
     size_t length;
 public:
     Parser();
-    
-    int get_radius() { return radius; };
-    int get_mode() { return mode; };
-    int get_size() { return size; };
+
+    size_t get_radius() { return radius; };
+    size_t get_mode() { return mode; };
+    size_t get_size() { return size; };
     int get_deg() { return deg; };
 
-    int get_small_size() {return small_size;};
-    int get_large_size() {return large_size;};
+    size_t get_small_size() {return small_size;};
+    size_t get_large_size() {return large_size;};
 
     size_t get_length() { return length; };
     DATATYPE_USED get_datatype() {return datatype;};

@@ -22,7 +22,12 @@ exec_params = {"gather_ker": {"length": "3GB",
                            " -opt-mode gen -datatype dbl",
                            " -opt-mode opt -datatype flt",
                            " -opt-mode opt -datatype dbl"],
-               "compute_latency_ker": {}}
+               "compute_latency_ker": {},
+               "scalar_ker": {},
+               "L1_bandwidth_ker": []}
+
+
+generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar"}
 
 
 def run_benchmarks(benchmarks_list, options):
@@ -32,10 +37,13 @@ def run_benchmarks(benchmarks_list, options):
             benchmark_gather_scatter(benchmark_name, exec_params[benchmark_name], options)
         elif benchmark_name == "fma_ker":
             fma_benchmark(benchmark_name, exec_params[benchmark_name], options)
-        elif benchmark_name == "compute_latency_ker":
-            compute_latency_benchmark(benchmark_name, exec_params[benchmark_name], options)
+        elif benchmark_name == "L1_bandwidth_ker":
+            l1_bandwidth_benchmark(benchmark_name, exec_params[benchmark_name], options)
+        elif benchmark_name in generic_compute_bound.keys():
+            generic_compute_bound_benchmark(benchmark_name, exec_params[benchmark_name], options,
+                                            generic_compute_bound[benchmark_name])
         else:
-            generic_benchmark(benchmark_name, exec_params[benchmark_name], options)
+            generic_benchmark(benchmark_name, [], options)
 
 
 def run_and_wait(cmd, options):
@@ -83,15 +91,26 @@ def fma_benchmark(benchmark_name, benchmark_parameters, options):
           str(peak_values["peak_performances"]["double"]) + " GFLOP/s]")
 
 
-def compute_latency_benchmark(benchmark_name, benchmark_parameters, options):
+def generic_compute_bound_benchmark(benchmark_name, benchmark_parameters, options, roof_name):
     cmd = "./bin/" + benchmark_name
     string_output = run_and_wait(cmd, options)
     timings = parse_timings(string_output)
     perf = timings["avg_flops"]
     peak_values = platform_specs[options.arch]
-    print("SUSTAINED PERFORMANCE on FLOATS: " + str("{:.1f}".format(perf)) + " GFLOP/s, " +
-          str("{:.1f}".format(100.0*perf/peak_values["peak_performances"]["float"])) + "% of peak[" +
-          str(peak_values["peak_performances"]["float"]) + " GFLOP/s]")
+    print("SUSTAINED PERFORMANCE : " + str("{:.1f}".format(perf)) + " GFLOP/s, " +
+          str("{:.1f}".format(100.0*perf/peak_values["peak_performances"][roof_name])) + "% of peak[" +
+          str(peak_values["peak_performances"][roof_name]) + " GFLOP/s]")
+
+
+def l1_bandwidth_benchmark(benchmark_name, benchmark_parameters, options):
+    for mode in range(0, 4):
+        cmd = "./bin/" + benchmark_name + " -mode " + str(mode)
+        string_output = run_and_wait(cmd, options)
+        timings = parse_timings(string_output)
+        bw = timings["avg_bw"]
+        peak_l1_bandwidth = platform_specs[options.arch]["bandwidths"]["L1"]
+        print("SUSTAINED BANDWIDTH : " + str("{:.1f}".format(bw)) + " GB/s, " +
+              str("{:.1f}".format(100.0*bw/peak_l1_bandwidth)) + "% of peak[" + str(peak_l1_bandwidth) + " GB/s]")
 
 
 def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options):
