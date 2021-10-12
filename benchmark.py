@@ -3,7 +3,7 @@ import optparse
 import shutil
 import subprocess
 from scripts.roofline import platform_specs
-from scripts.helpers import sizeof_fmt,parse_timings,get_cores_count
+from scripts.helpers import sizeof_fmt,parse_timings,get_cores_count,get_arch
 from scripts.plot import plot_gather_or_scatter
 
 
@@ -27,10 +27,13 @@ exec_params = {"gather_ker": {"length": "3GB",
 
 def run_benchmarks(benchmarks_list, options):
     for benchmark_name in benchmarks_list:
+        print("\n DOING " + benchmark_name + " BENCHMARK\n")
         if benchmark_name == "gather_ker" or benchmark_name == "scatter_ker":
             benchmark_gather_scatter(benchmark_name, exec_params[benchmark_name], options)
         elif benchmark_name == "fma_ker":
             fma_benchmark(benchmark_name, exec_params[benchmark_name], options)
+        elif benchmark_name == "compute_latency_ker":
+            compute_latency_benchmark(benchmark_name, exec_params[benchmark_name], options)
         else:
             generic_benchmark(benchmark_name, exec_params[benchmark_name], options)
 
@@ -51,10 +54,6 @@ def run_and_wait(cmd, options):
 
 def generic_benchmark(benchmark_name, benchmark_parameters, options):
     cmd = "./bin/" + benchmark_name
-    string_output = run_and_wait(cmd, options)
-    print(parse_timings(string_output))
-
-    cmd = "./bin/" + benchmark_name + " -mode 1"
     string_output = run_and_wait(cmd, options)
     print(parse_timings(string_output))
 
@@ -82,6 +81,17 @@ def fma_benchmark(benchmark_name, benchmark_parameters, options):
     print("SUSTAINED PERFORMANCE on DOUBLES: " + str("{:.1f}".format(max_dbl_flops)) + " GFLOP/s, " +
           str("{:.1f}".format(100.0*max_dbl_flops/peak_values["peak_performances"]["double"])) + "% of peak[" +
           str(peak_values["peak_performances"]["double"]) + " GFLOP/s]")
+
+
+def compute_latency_benchmark(benchmark_name, benchmark_parameters, options):
+    cmd = "./bin/" + benchmark_name
+    string_output = run_and_wait(cmd, options)
+    timings = parse_timings(string_output)
+    perf = timings["avg_flops"]
+    peak_values = platform_specs[options.arch]
+    print("SUSTAINED PERFORMANCE on FLOATS: " + str("{:.1f}".format(perf)) + " GFLOP/s, " +
+          str("{:.1f}".format(100.0*perf/peak_values["peak_performances"]["float"])) + "% of peak[" +
+          str(peak_values["peak_performances"]["float"]) + " GFLOP/s]")
 
 
 def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options):
@@ -124,7 +134,7 @@ if __name__ == "__main__":
                       help="specify thread number", default=get_cores_count())
     parser.add_option('-a', '--arch',
                       action="store", dest="arch",
-                      help="specify thread number", default="unknown")
+                      help="specify thread number", default=get_arch())
 
     options, args = parser.parse_args()
 

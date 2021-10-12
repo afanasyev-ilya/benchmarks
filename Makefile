@@ -32,7 +32,7 @@ endif
 
 all: create_folders kernels algorithms
 
-kernels: scatter_ker gather_ker L1_bandwidth_ker fma_ker compute_latency_ker
+kernels: scatter_ker gather_ker fma_ker compute_latency_ker
 
 algorithms: spmv_alg
 

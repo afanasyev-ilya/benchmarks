@@ -30,7 +30,7 @@ void call_kernel(Parser &_parser)
     MemoryAPI::allocate_array(&out_data, size);
 
     size_t bytes_requested = ((size_t)size) * (2/*since 2 arrays*/ * sizeof(float));
-    size_t flops_requested = size*NUM_VECTORS*INNER_FMA_ITERATIONS * 2 /* FMA + sqrt*/;
+    size_t flops_requested = size*NUM_VECTORS*INNER_FMA_ITERATIONS * 3 /* FMA + sqrt*/;
     auto counter = PerformanceCounter(bytes_requested, flops_requested);
     int iterations = LOC_REPEAT;
 

@@ -72,10 +72,13 @@ def get_arch():  # returns architecture, eigher kunpeng or intel_xeon
             vendor_line = item.strip()
 
     if "aarch64" in arch_line:
-        architecture = "kunpeng"
+        if get_cores_count() == 64:
+            architecture = "kunpeng_920_64_core"
+        if get_cores_count() == 48:
+            architecture = "kunpeng_920_48_core"
     if "x86_64" in arch_line:
         if "Intel" in vendor_line:
-            architecture = "intel_xeon"
+            architecture = "intel_xeon_6140"
         if "AMD" in vendor_line:
             architecture = "amd_epyc"
     return architecture
