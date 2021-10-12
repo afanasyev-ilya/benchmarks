@@ -2,6 +2,17 @@
 
 typedef float base_type;
 
+#define INNER_FMA_ITERATIONS 10000
+#define NUM_VECTORS 8
+
+#ifdef __USE_INTEL__
+#define SIMD_SIZE 16
+#endif
+
+#ifdef __USE_KUNPENG__
+#define SIMD_SIZE 4
+#endif
+
 #include "fma.h"
 
 void call_kernel(Parser &_parser)
