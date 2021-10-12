@@ -5,7 +5,7 @@ ifeq ($(COMPILER),g++)
 	Include_Path = -I ./
 
 	ifeq ($(ARCH),kunpeng)
-    	Flags = -D __USE_KUNPENG__ -O2 -std=c++17 -fno-trapping-math -fopenmp-simd -fopenmp  -ffreestanding -fopt-info-vec-all=report.lst -ffast-math -march=armv8.2-a -mtune=tsv110
+    	Flags = -D __USE_KUNPENG_920__ -O2 -std=c++17 -fno-trapping-math -fopenmp-simd -fopenmp  -ffreestanding -fopt-info-vec-all=report.lst -ffast-math -march=armv8.2-a -mtune=tsv110
     endif
 
     ifeq ($(ARCH),intel)

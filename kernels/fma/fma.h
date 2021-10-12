@@ -2,7 +2,7 @@
 
 #ifdef __USE_INTEL__
 #include <immintrin.h>
-#elif __USE_KUNPENG__
+#elif __USE_KUNPENG_920__
 #include <arm_neon.h>
 #endif
 
@@ -72,7 +72,73 @@ inline void fma(double reg_res[], double a[], double b[], double c[])
 }
 #endif
 
-template<typename DT>
+#ifdef __USE_KUNPENG_920__
+inline void fma(float reg_res[], float a[], float b[], float c[])
+{
+    reg_res[0] = a[0] * b[0] + c[0];
+    reg_res[1] = a[1] * b[1] + c[1];
+    reg_res[2] = a[2] * b[2] + c[2];
+    reg_res[3] = a[3] * b[3] + c[3];
+}
+
+inline void fma(double reg_res[], double a[], double b[], double c[])
+{
+    reg_res[0] = a[0] * b[0] + c[0];
+    reg_res[1] = a[1] * b[1] + c[1];
+}
+#endif
+
+#ifdef __USE_INTEL__
+inline void copy_reg(float dst[], float src[])
+{
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[3] = src[3];
+    dst[4] = src[4];
+    dst[5] = src[5];
+    dst[6] = src[6];
+    dst[7] = src[7];
+    dst[8] = src[8];
+    dst[9] = src[9];
+    dst[10] = src[10];
+    dst[11] = src[11];
+    dst[12] = src[12];
+    dst[13] = src[13];
+    dst[14] = src[14];
+    dst[15] = src[15];
+}
+
+inline void copy_reg(double dst[], double src[])
+{
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[3] = src[3];
+    dst[4] = src[4];
+    dst[5] = src[5];
+    dst[6] = src[6];
+    dst[7] = src[7];
+}
+#endif
+
+#ifdef __USE_KUNPENG_920__
+inline void copy_reg(float dst[], float src[])
+{
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[3] = src[3];
+}
+
+inline void copy_reg(double dst[], double src[])
+{
+    dst[0] = src[0];
+    dst[1] = src[1];
+}
+#endif
+
+template<typename DT, int SIMD_SIZE>
 inline void load(DT reg[], DT *memory)
 {
     #pragma unroll(SIMD_SIZE)
@@ -82,23 +148,13 @@ inline void load(DT reg[], DT *memory)
     }
 }
 
-template<typename DT>
+template<typename DT, int SIMD_SIZE>
 inline void store(DT reg[], DT *memory)
 {
-#pragma unroll(SIMD_SIZE)
+    #pragma unroll(SIMD_SIZE)
     for(int i = 0; i < SIMD_SIZE; i++)
     {
         memory[i] = reg[i];
-    }
-}
-
-template<typename DT>
-inline void copy_reg(DT dst[], DT src[])
-{
-#pragma unroll(SIMD_SIZE)
-    for(int i = 0; i < SIMD_SIZE; i++)
-    {
-        dst[i] = src[i];
     }
 }
 
@@ -132,7 +188,7 @@ reg6 = _mm512_fmadd_pd(reg6, reg, reg);\
 reg7 = _mm512_fmadd_pd(reg7, reg, reg);\
 reg8 = _mm512_fmadd_pd(reg8, reg, reg);\
 
-template<typename DT>
+template<typename DT, int SIMD_SIZE>
 void kernel_basic(DT *in_data, DT *out_data, size_t size)
 {
     #pragma omp parallel
@@ -158,14 +214,14 @@ void kernel_basic(DT *in_data, DT *out_data, size_t size)
         #pragma omp for schedule(static)
         for (size_t i = 0; i < size; i += SIMD_SIZE*NUM_VECTORS)
         {
-            load(reg1, &in_data[i + SIMD_SIZE*0]);
-            load(reg2, &in_data[i + SIMD_SIZE*1]);
-            load(reg3, &in_data[i + SIMD_SIZE*2]);
-            load(reg4, &in_data[i + SIMD_SIZE*3]);
-            load(reg1, &in_data[i + SIMD_SIZE*4]);
-            load(reg2, &in_data[i + SIMD_SIZE*5]);
-            load(reg3, &in_data[i + SIMD_SIZE*6]);
-            load(reg4, &in_data[i + SIMD_SIZE*7]);
+            load<DT, SIMD_SIZE>(reg1, &in_data[i + SIMD_SIZE*0]);
+            load<DT, SIMD_SIZE>(reg2, &in_data[i + SIMD_SIZE*1]);
+            load<DT, SIMD_SIZE>(reg3, &in_data[i + SIMD_SIZE*2]);
+            load<DT, SIMD_SIZE>(reg4, &in_data[i + SIMD_SIZE*3]);
+            load<DT, SIMD_SIZE>(reg1, &in_data[i + SIMD_SIZE*4]);
+            load<DT, SIMD_SIZE>(reg2, &in_data[i + SIMD_SIZE*5]);
+            load<DT, SIMD_SIZE>(reg3, &in_data[i + SIMD_SIZE*6]);
+            load<DT, SIMD_SIZE>(reg4, &in_data[i + SIMD_SIZE*7]);
 
             #pragma unroll(10)
             for(int step = 0; step < INNER_FMA_ITERATIONS; step++)
@@ -189,14 +245,14 @@ void kernel_basic(DT *in_data, DT *out_data, size_t size)
                 FMA_GROUP(reg8_old)
             }
 
-            store(reg1, &out_data[i + SIMD_SIZE*0]);
-            store(reg2, &out_data[i + SIMD_SIZE*1]);
-            store(reg3, &out_data[i + SIMD_SIZE*2]);
-            store(reg4, &out_data[i + SIMD_SIZE*3]);
-            store(reg1, &out_data[i + SIMD_SIZE*4]);
-            store(reg2, &out_data[i + SIMD_SIZE*5]);
-            store(reg3, &out_data[i + SIMD_SIZE*6]);
-            store(reg4, &out_data[i + SIMD_SIZE*7]);
+            store<DT, SIMD_SIZE>(reg1, &out_data[i + SIMD_SIZE*0]);
+            store<DT, SIMD_SIZE>(reg2, &out_data[i + SIMD_SIZE*1]);
+            store<DT, SIMD_SIZE>(reg3, &out_data[i + SIMD_SIZE*2]);
+            store<DT, SIMD_SIZE>(reg4, &out_data[i + SIMD_SIZE*3]);
+            store<DT, SIMD_SIZE>(reg1, &out_data[i + SIMD_SIZE*4]);
+            store<DT, SIMD_SIZE>(reg2, &out_data[i + SIMD_SIZE*5]);
+            store<DT, SIMD_SIZE>(reg3, &out_data[i + SIMD_SIZE*6]);
+            store<DT, SIMD_SIZE>(reg4, &out_data[i + SIMD_SIZE*7]);
         }
     };
 }
@@ -225,16 +281,16 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
         __m512 reg8_old = _mm512_setzero_ps();
 
         #pragma omp for schedule(static)
-        for (size_t i = 0; i < size; i += NUM_VECTORS*SIMD_SIZE)
+        for (size_t i = 0; i < size; i += NUM_VECTORS*SIMD_SIZE_S)
         {
-            reg1 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*0]));
-            reg2 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*1]));
-            reg3 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*2]));
-            reg4 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*3]));
-            reg5 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*4]));
-            reg6 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*5]));
-            reg7 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*6]));
-            reg8 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*7]));
+            reg1 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE_S*0]));
+            reg2 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE_S*1]));
+            reg3 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE_S*2]));
+            reg4 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE_S*3]));
+            reg5 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE_S*4]));
+            reg6 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE_S*5]));
+            reg7 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE_S*6]));
+            reg8 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE_S*7]));
 
             for(int step = 0; step < INNER_FMA_ITERATIONS; step++)
             {
@@ -257,14 +313,14 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
                 AVX_FMA_GROUP_S(reg8_old)
             }
 
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*0], reg1);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*1], reg2);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*2], reg3);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*3], reg4);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*4], reg5);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*5], reg6);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*6], reg7);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*7], reg8);
+            _mm512_storeu_ps (&out_data[i + SIMD_SIZE_S*0], reg1);
+            _mm512_storeu_ps (&out_data[i + SIMD_SIZE_S*1], reg2);
+            _mm512_storeu_ps (&out_data[i + SIMD_SIZE_S*2], reg3);
+            _mm512_storeu_ps (&out_data[i + SIMD_SIZE_S*3], reg4);
+            _mm512_storeu_ps (&out_data[i + SIMD_SIZE_S*4], reg5);
+            _mm512_storeu_ps (&out_data[i + SIMD_SIZE_S*5], reg6);
+            _mm512_storeu_ps (&out_data[i + SIMD_SIZE_S*6], reg7);
+            _mm512_storeu_ps (&out_data[i + SIMD_SIZE_S*7], reg8);
         }
     }
 }
@@ -292,16 +348,16 @@ void kernel_asm(double *in_data, double *out_data, size_t size)
         __m512d reg8_old = _mm512_setzero_pd();
 
         #pragma omp for schedule(static)
-        for (size_t i = 0; i < size; i += NUM_VECTORS*SIMD_SIZE)
+        for (size_t i = 0; i < size; i += NUM_VECTORS*SIMD_SIZE_D)
         {
-            reg1 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE*0]));
-            reg2 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE*1]));
-            reg3 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE*2]));
-            reg4 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE*3]));
-            reg5 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE*4]));
-            reg6 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE*5]));
-            reg7 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE*6]));
-            reg8 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE*7]));
+            reg1 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE_D*0]));
+            reg2 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE_D*1]));
+            reg3 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE_D*2]));
+            reg4 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE_D*3]));
+            reg5 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE_D*4]));
+            reg6 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE_D*5]));
+            reg7 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE_D*6]));
+            reg8 = _mm512_loadu_pd(&(in_data[i + SIMD_SIZE_D*7]));
 
             for(int step = 0; step < INNER_FMA_ITERATIONS; step++)
             {
@@ -324,100 +380,35 @@ void kernel_asm(double *in_data, double *out_data, size_t size)
                 AVX_FMA_GROUP_D(reg8_old)
             }
 
-            _mm512_storeu_pd (&out_data[i + SIMD_SIZE*0], reg1);
-            _mm512_storeu_pd (&out_data[i + SIMD_SIZE*1], reg2);
-            _mm512_storeu_pd (&out_data[i + SIMD_SIZE*2], reg3);
-            _mm512_storeu_pd (&out_data[i + SIMD_SIZE*3], reg4);
-            _mm512_storeu_pd (&out_data[i + SIMD_SIZE*4], reg5);
-            _mm512_storeu_pd (&out_data[i + SIMD_SIZE*5], reg6);
-            _mm512_storeu_pd (&out_data[i + SIMD_SIZE*6], reg7);
-            _mm512_storeu_pd (&out_data[i + SIMD_SIZE*7], reg8);
+            _mm512_storeu_pd (&out_data[i + SIMD_SIZE_D*0], reg1);
+            _mm512_storeu_pd (&out_data[i + SIMD_SIZE_D*1], reg2);
+            _mm512_storeu_pd (&out_data[i + SIMD_SIZE_D*2], reg3);
+            _mm512_storeu_pd (&out_data[i + SIMD_SIZE_D*3], reg4);
+            _mm512_storeu_pd (&out_data[i + SIMD_SIZE_D*4], reg5);
+            _mm512_storeu_pd (&out_data[i + SIMD_SIZE_D*5], reg6);
+            _mm512_storeu_pd (&out_data[i + SIMD_SIZE_D*6], reg7);
+            _mm512_storeu_pd (&out_data[i + SIMD_SIZE_D*7], reg8);
         }
     }
 }
 #endif
 
 
-#ifdef __USE_KUNPENG__
+#ifdef __USE_KUNPENG_920__
 template<typename DT>
 void kernel_asm(DT *in_data, DT *out_data, size_t size)
 {
-    const int simd_size = 512 / (sizeof(DT)*8);
-    const int num_vectors = 4;
 
-    #pragma omp parallel
-    {
-        /*__m512 reg1 = _mm512_setzero_ps();
-        __m512 reg2 = _mm512_setzero_ps();
-        __m512 reg3 = _mm512_setzero_ps();
-        __m512 reg4 = _mm512_setzero_ps();
-        __m512 reg5 = _mm512_setzero_ps();
-        __m512 reg6 = _mm512_setzero_ps();
-        __m512 reg7 = _mm512_setzero_ps();
-        __m512 reg8 = _mm512_setzero_ps();
-
-        __m512 reg1_old = _mm512_setzero_ps();
-        __m512 reg2_old = _mm512_setzero_ps();
-        __m512 reg3_old = _mm512_setzero_ps();
-        __m512 reg4_old = _mm512_setzero_ps();
-        __m512 reg5_old = _mm512_setzero_ps();
-        __m512 reg6_old = _mm512_setzero_ps();
-        __m512 reg7_old = _mm512_setzero_ps();
-        __m512 reg8_old = _mm512_setzero_ps();*/
-
-        #pragma omp for schedule(static)
-        for (size_t i = 0; i < size; i += NUM_VECTORS*SIMD_SIZE)
-        {
-            /*reg1 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*0]));
-            reg2 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*1]));
-            reg3 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*2]));
-            reg4 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*3]));
-            reg5 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*4]));
-            reg6 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*5]));
-            reg7 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*6]));
-            reg8 = _mm512_loadu_ps(&(in_data[i + SIMD_SIZE*7]));
-
-            for(int step = 0; step < INNER_FMA_ITERATIONS; step++)
-            {
-                reg1_old = reg1;
-                reg2_old = reg2;
-                reg3_old = reg3;
-                reg4_old = reg4;
-                reg5_old = reg5;
-                reg6_old = reg6;
-                reg7_old = reg7;
-                reg8_old = reg8;
-
-                AVX_FMA_GROUP(reg1)
-                AVX_FMA_GROUP(reg2)
-                AVX_FMA_GROUP(reg3)
-                AVX_FMA_GROUP(reg4)
-                AVX_FMA_GROUP(reg5)
-                AVX_FMA_GROUP(reg6)
-                AVX_FMA_GROUP(reg7)
-                AVX_FMA_GROUP(reg8)
-            }
-
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*0], reg1);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*1], reg2);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*2], reg3);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*3], reg4);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*4], reg5);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*5], reg6);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*6], reg7);
-            _mm512_storeu_ps (&out_data[i + SIMD_SIZE*7], reg8);*/
-        }
-    }
 }
 #endif
 
 
-template<typename DT>
+template<typename DT, int SIMD_SIZE>
 void kernel(int mode, DT *in_data, DT *out_data, size_t size)
 {
     if(mode == 0)
     {
-        kernel_basic(in_data, out_data, size);
+        kernel_basic<DT, SIMD_SIZE>(in_data, out_data, size);
     }
     else if(mode == 1)
     {

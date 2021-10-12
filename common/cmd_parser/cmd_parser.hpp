@@ -12,6 +12,8 @@ Parser::Parser()
 
     small_size = 10;
     large_size = 100;
+
+    datatype = __FLOAT__;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,6 +72,17 @@ void Parser::parse_args(int _argc, char **_argv)
         if ((option.compare("-s") == 0) || (option.compare("-size") == 0))
         {
             size = atoi(_argv[++i]);
+        }
+
+        if ((option.compare("-dt") == 0) || (option.compare("-datatype") == 0))
+        {
+            string dt = _argv[++i];
+
+            if(dt == "float" || dt == "flt")
+                datatype = __FLOAT__;
+
+            if(dt == "double" || dt == "dbl")
+                datatype = __DOUBLE__;
         }
 
         if (option.compare("-small-size") == 0)

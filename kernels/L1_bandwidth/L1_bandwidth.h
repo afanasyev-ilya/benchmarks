@@ -2,7 +2,7 @@
 
 #define RADIUS 1000000000
 
-#ifdef __USE_KUNPENG__
+#ifdef __USE_KUNPENG_920__
 #include <arm_neon.h>
 #endif 
 
@@ -54,7 +54,7 @@ void Init(int mode, AT *a, AT *b, AT **chunk_read, AT **chunk_write, size_t size
     }
 }
 
-#ifdef __USE_KUNPENG__
+#ifdef __USE_KUNPENG_920__
 template<typename AT>
 float Kernel_read(AT **chunk, size_t cache_size)
 {
@@ -355,7 +355,7 @@ float Kernel_random_read(AT **chunk, size_t cache_size, int *random_addresses)
 #endif
 
 
-#ifdef __USE_KUNPENG__
+#ifdef __USE_KUNPENG_920__
 template<typename AT>
 float Kernel_read_and_write(AT **chunk_read, AT **chunk_write, size_t cache_size)
 {
@@ -592,7 +592,7 @@ float Kernel_read_and_write(AT **chunk_read, AT **chunk_write, size_t cache_size
 #endif
 
 
-#ifdef __USE_KUNPENG__
+#ifdef __USE_KUNPENG_920__
 template<typename AT>
 float Kernel_read_no_paral_instr(AT **chunk, size_t cache_size) // Без параллельных инструкций
 {

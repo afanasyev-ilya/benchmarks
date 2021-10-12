@@ -10,7 +10,7 @@ typedef float base_type;
 #define SIMD_SIZE 512
 #endif
 
-#ifdef __USE_KUNPENG__
+#ifdef __USE_KUNPENG_920__
 #define SIMD_SIZE 128
 #endif
 
