@@ -22,12 +22,13 @@ exec_params = {"gather_ker": {"length": "3GB",
                            " -opt-mode gen -datatype dbl",
                            " -opt-mode opt -datatype flt",
                            " -opt-mode opt -datatype dbl"],
-               "compute_latency_ker": {},
-               "scalar_ker": {},
-               "L1_bandwidth_ker": []}
+               "compute_latency_ker": "",
+               "scalar_ker": "",
+               "L1_bandwidth_ker": "",
+               "gemm_alg": " -size 10000 "}
 
 
-generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar"}
+generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float"}
 
 
 def run_benchmarks(benchmarks_list, options):
@@ -92,7 +93,7 @@ def fma_benchmark(benchmark_name, benchmark_parameters, options):
 
 
 def generic_compute_bound_benchmark(benchmark_name, benchmark_parameters, options, roof_name):
-    cmd = "./bin/" + benchmark_name
+    cmd = "./bin/" + benchmark_name + " " + benchmark_parameters
     string_output = run_and_wait(cmd, options)
     timings = parse_timings(string_output)
     perf = timings["avg_flops"]

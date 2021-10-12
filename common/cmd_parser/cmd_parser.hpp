@@ -5,9 +5,8 @@
 Parser::Parser()
 {
     radius = 1;
-    length = 100;
     mode = 0;
-    size = 10;
+    size = 100;
     deg = 32;
 
     small_size = 10;
@@ -53,11 +52,6 @@ void Parser::parse_args(int _argc, char **_argv)
         if ((option.compare("-r") == 0) || (option.compare("-radius") == 0))
         {
             radius = atoi(_argv[++i]);
-        }
-
-        if ((option.compare("-l") == 0) || (option.compare("-length") == 0))
-        {
-            length = atoi(_argv[++i]);
         }
 
         if ((option.compare("-m") == 0) || (option.compare("-mode") == 0))

@@ -5,7 +5,7 @@ typedef double base_type;
 
 void call_kernel(Parser &_parser)
 {
-    size_t size = _parser.get_length();
+    size_t size = _parser.get_size();
     base_type * y = new base_type[size];
     base_type * x = new base_type[size];
 

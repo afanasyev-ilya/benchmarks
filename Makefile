@@ -24,7 +24,7 @@ ifeq ($(COMPILER),icpc)
         Flags = -D __USE_INTEL__ -O2 -std=c++17 -D NOFUNCCALL -qopt-report=1 -qopt-report-phase=vec -qopenmp -ffreestanding -qopt-streaming-stores=always -xCORE-AVX512 -mprefer-vector-width=512
     endif
 
-  	Libraries = -fopenmp
+  	Libraries = -fopenmp -mkl
   	Library_Path =
 endif
 
@@ -34,7 +34,7 @@ all: create_folders kernels algorithms
 
 kernels: scatter_ker gather_ker fma_ker compute_latency_ker scalar_ker L1_bandwidth
 
-algorithms: spmv_alg
+algorithms: gemm_alg
 
 %_ker: %_k.o create_folders
 	$(ARCH_COMPILER) object_files/$< $(Library_Path) $(Libraries) -o ./bin/$@

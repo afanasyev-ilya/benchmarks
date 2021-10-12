@@ -29,8 +29,6 @@ private:
 
     DATATYPE_USED datatype;
     OPT_MODE opt_mode;
-
-    size_t length;
 public:
     Parser();
 
@@ -42,7 +40,6 @@ public:
     size_t get_small_size() {return small_size;};
     size_t get_large_size() {return large_size;};
 
-    size_t get_length() { return length; };
     DATATYPE_USED get_datatype() {return datatype;};
     OPT_MODE get_opt_mode(){return opt_mode;};
     
