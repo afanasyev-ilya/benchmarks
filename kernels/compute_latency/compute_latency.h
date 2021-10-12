@@ -202,14 +202,14 @@ reg7 = vfmaq_laneq_f32(reg7, reg, reg, 0);\
 reg8 = vfmaq_laneq_f32(reg8, reg, reg, 0);
 
 #define ARM_NEON_FMA_GROUP_D(reg) \
-reg1 = vfmaq_laneq_f64(reg1, reg, reg, 0);\
-reg2 = vfmaq_laneq_f64(reg2, reg, reg, 0);\
-reg3 = vfmaq_laneq_f64(reg3, reg, reg, 0);\
-reg4 = vfmaq_laneq_f64(reg4, reg, reg, 0);\
-reg5 = vfmaq_laneq_f64(reg5, reg, reg, 0);\
-reg6 = vfmaq_laneq_f64(reg6, reg, reg, 0);\
-reg7 = vfmaq_laneq_f64(reg7, reg, reg, 0);\
-reg8 = vfmaq_laneq_f64(reg8, reg, reg, 0);
+reg1 = vfmaq_laneq_f32(reg1, reg, reg, 0);\
+reg2 = vfmaq_laneq_f32(reg2, reg, reg, 0);\
+reg3 = vfmaq_laneq_f32(reg3, reg, reg, 0);\
+reg4 = vfmaq_laneq_f32(reg4, reg, reg, 0);\
+reg5 = vfmaq_laneq_f32(reg5, reg, reg, 0);\
+reg6 = vfmaq_laneq_f32(reg6, reg, reg, 0);\
+reg7 = vfmaq_laneq_f32(reg7, reg, reg, 0);\
+reg8 = vfmaq_laneq_f32(reg8, reg, reg, 0);
 #endif
 
 template<typename DT, int SIMD_SIZE>
@@ -427,7 +427,7 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
         float32x4_t reg1_old, reg2_old, reg3_old, reg4_old, reg5_old, reg6_old, reg7_old, reg8_old;
 
         #pragma omp for schedule(static)
-        for (size_t i = 0; i < size; i += NUM_VECTORS*SIMD_SIZE_S)
+        for (size_t i = 0; i < size; i += NUM_VECTORS*SIMD_SIZE_D)
         {
             reg1 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*0]));
             reg2 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*1]));
@@ -473,54 +473,7 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
 
 void kernel_asm(double *in_data, double *out_data, size_t size)
 {
-    #pragma omp parallel
-    {
-        float64x2_t reg1, reg2, reg3, reg4, reg5, reg6, reg7, reg8;
-        float64x2_t reg1_old, reg2_old, reg3_old, reg4_old, reg5_old, reg6_old, reg7_old, reg8_old;
 
-        #pragma omp for schedule(static)
-        for (size_t i = 0; i < size; i += NUM_VECTORS*SIMD_SIZE_D)
-        {
-            reg1 = vld1q_f64(&(in_data[i + SIMD_SIZE_D*0]));
-            reg2 = vld1q_f64(&(in_data[i + SIMD_SIZE_D*1]));
-            reg3 = vld1q_f64(&(in_data[i + SIMD_SIZE_D*2]));
-            reg4 = vld1q_f64(&(in_data[i + SIMD_SIZE_D*3]));
-            reg5 = vld1q_f64(&(in_data[i + SIMD_SIZE_D*4]));
-            reg6 = vld1q_f64(&(in_data[i + SIMD_SIZE_D*5]));
-            reg7 = vld1q_f64(&(in_data[i + SIMD_SIZE_D*6]));
-            reg8 = vld1q_f64(&(in_data[i + SIMD_SIZE_D*7]));
-
-            for(int step = 0; step < INNER_FMA_ITERATIONS; step++)
-            {
-                reg1_old = reg1;
-                reg2_old = reg2;
-                reg3_old = reg3;
-                reg4_old = reg4;
-                reg5_old = reg5;
-                reg6_old = reg6;
-                reg7_old = reg7;
-                reg8_old = reg8;
-
-                ARM_NEON_FMA_GROUP_D(reg1_old)
-                ARM_NEON_FMA_GROUP_D(reg2_old)
-                ARM_NEON_FMA_GROUP_D(reg3_old)
-                ARM_NEON_FMA_GROUP_D(reg4_old)
-                ARM_NEON_FMA_GROUP_D(reg5_old)
-                ARM_NEON_FMA_GROUP_D(reg6_old)
-                ARM_NEON_FMA_GROUP_D(reg7_old)
-                ARM_NEON_FMA_GROUP_D(reg8_old)
-            }
-
-            vst1q_f64 (&out_data[i + SIMD_SIZE_D*0], reg1);
-            vst1q_f64 (&out_data[i + SIMD_SIZE_D*1], reg2);
-            vst1q_f64 (&out_data[i + SIMD_SIZE_D*2], reg3);
-            vst1q_f64 (&out_data[i + SIMD_SIZE_D*3], reg4);
-            vst1q_f64 (&out_data[i + SIMD_SIZE_D*4], reg5);
-            vst1q_f64 (&out_data[i + SIMD_SIZE_D*5], reg6);
-            vst1q_f64 (&out_data[i + SIMD_SIZE_D*6], reg7);
-            vst1q_f64 (&out_data[i + SIMD_SIZE_D*7], reg8);
-        }
-    }
 }
 #endif
 

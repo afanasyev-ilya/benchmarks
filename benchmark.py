@@ -3,7 +3,7 @@ import optparse
 import shutil
 import subprocess
 from scripts.roofline import platform_specs
-from scripts.helpers import sizeof_fmt,parse_timings
+from scripts.helpers import sizeof_fmt,parse_timings,get_cores_count
 from scripts.plot import plot_gather_or_scatter
 
 
@@ -66,8 +66,7 @@ def fma_benchmark(benchmark_name, benchmark_parameters, options):
         timings = parse_timings(string_output)
         flops.append(timings["avg_flops"])
 
-    print(flops)
-    peak_values = platform_specs[options.target_name]
+    peak_values = platform_specs[options.arch]
     max_flt_flops = max(flops[0], flops[2])
     max_dbl_flops = max(flops[1], flops[3])
     if flops[0] < flops[2]:
@@ -121,15 +120,15 @@ if __name__ == "__main__":
                       help="specify compiler used", default="g++")
     parser.add_option('-t', '--threads',
                       action="store", dest="threads",
-                      help="specify thread number", default=None)
-    parser.add_option('-n', '--target',
-                      action="store", dest="target_name",
+                      help="specify thread number", default=get_cores_count())
+    parser.add_option('-a', '--arch',
+                      action="store", dest="arch",
                       help="specify thread number", default="unknown")
 
     options, args = parser.parse_args()
 
-    if options.target_name not in platform_specs:
-        print("Unsupported target platform. Please add its's specifications into roofline.py")
+    if options.arch not in platform_specs:
+        print("Unsupported target platform. Please add its specifications into roofline.py")
         exit()
 
     benchmarks_list = []
