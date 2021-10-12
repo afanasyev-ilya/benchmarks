@@ -1,6 +1,6 @@
 #include "common/lib.h"
 
-#define INNER_FMA_ITERATIONS 10000
+#define INNER_FMA_ITERATIONS 1000
 #define NUM_VECTORS 8
 
 #ifdef __USE_INTEL__
@@ -30,7 +30,7 @@ void call_kernel(Parser &_parser)
     MemoryAPI::allocate_array(&out_data, size);
 
     size_t bytes_requested = ((size_t)size) * (2/*since 2 arrays*/ * sizeof(float));
-    size_t flops_requested = size*NUM_VECTORS*INNER_FMA_ITERATIONS * 2 /*since FMA*/;
+    size_t flops_requested = size*NUM_VECTORS*INNER_FMA_ITERATIONS * 2 /* FMA + sqrt*/;
     auto counter = PerformanceCounter(bytes_requested, flops_requested);
     int iterations = LOC_REPEAT;
 
@@ -39,7 +39,7 @@ void call_kernel(Parser &_parser)
     for(int i = 0; i < 10; i++) // heat runs
     {
         re_init(in_data, out_data, size);
-        kernel<float, SIMD_SIZE_S>(_parser.get_opt_mode(), in_data, out_data, size);
+        kernel<float, SIMD_SIZE_S>(in_data, out_data, size);
     }
 
     for(int i = 0; i < iterations; i++)
@@ -47,7 +47,7 @@ void call_kernel(Parser &_parser)
         counter.start_timing();
         re_init(in_data, out_data, size);
 
-        kernel<float, SIMD_SIZE_S>(_parser.get_opt_mode(), in_data, out_data, size);
+        kernel<float, SIMD_SIZE_S>(in_data, out_data, size);
 
         counter.end_timing();
         counter.update_counters();
@@ -65,8 +65,6 @@ int main(int argc, char **argv)
 {
     Parser parser;
     parser.parse_args(argc, argv);
-
-    print_omp_info();
 
     call_kernel(parser);
     return 0;

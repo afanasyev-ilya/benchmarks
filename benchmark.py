@@ -21,7 +21,8 @@ exec_params = {"gather_ker": {"length": "3GB",
                "fma_ker": [" -opt-mode gen -datatype flt",
                            " -opt-mode gen -datatype dbl",
                            " -opt-mode opt -datatype flt",
-                           " -opt-mode opt -datatype dbl"]}
+                           " -opt-mode opt -datatype dbl"],
+               "compute_latency_ker": {}}
 
 
 def run_benchmarks(benchmarks_list, options):

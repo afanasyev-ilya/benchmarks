@@ -21,7 +21,7 @@ ifeq ($(COMPILER),icpc)
 	Include_Path = -I ./
 
     ifeq ($(ARCH),intel)
-        Flags = -D __USE_INTEL__ -O2 -std=c++17 -D NOFUNCCALL -qopt-report=1 -qopt-report-phase=vec -qopenmp -ffreestanding -qopt-streaming-stores=always -xCORE-AVX512
+        Flags = -D __USE_INTEL__ -O2 -std=c++17 -D NOFUNCCALL -qopt-report=1 -qopt-report-phase=vec -qopenmp -ffreestanding -qopt-streaming-stores=always -xCORE-AVX512 -mprefer-vector-width=512
     endif
 
   	Libraries = -fopenmp
@@ -32,7 +32,7 @@ endif
 
 all: create_folders kernels algorithms
 
-kernels: scatter_ker gather_ker L1_bandwidth_ker
+kernels: scatter_ker gather_ker L1_bandwidth_ker fma_ker compute_latency_ker
 
 algorithms: spmv_alg
 

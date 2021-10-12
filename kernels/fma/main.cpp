@@ -107,8 +107,6 @@ int main(int argc, char **argv)
     Parser parser;
     parser.parse_args(argc, argv);
 
-    print_omp_info();
-
     if(parser.get_datatype() == __FLOAT__)
         call_kernel_s(parser);
     else if(parser.get_datatype() == __DOUBLE__)
