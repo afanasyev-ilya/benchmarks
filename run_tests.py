@@ -32,12 +32,18 @@ exec_params = {"gather_ker": {"length": "3GB",
                                   " -size 100000000 -r 7",
                                   " -size 100000000 -r 9"],
                "primes_alg": [" -size 100000 "],
-               "fib_ker": [" -size 100000000000 "]}
+               "fib_ker": [" -size 100000000000 "],
+               "dense_vec_ker": [" -large-size 4GB -mode 0",
+                                 " -large-size 4GB -mode 1",
+                                 " -large-size 4GB -mode 2",
+                                 " -large-size 4GB -mode 3",
+                                 " -large-size 4GB -mode 4",
+                                 " -large-size 4GB -mode 5"]}
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
                          "primes_alg": "lehmer", "fib_ker": "scalar"}
-generic_memory_bound = {"stencil_1D_alg": "L1"}
+generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM"}
 
 
 def run_benchmarks(benchmarks_list, options):

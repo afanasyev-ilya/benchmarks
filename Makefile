@@ -5,7 +5,7 @@ ifeq ($(COMPILER),g++)
 	Include_Path = -I ./
 
 	ifeq ($(ARCH),kunpeng)
-    	Flags = -D __USE_KUNPENG_920__ -O2 -std=c++17 -fno-trapping-math -fopenmp-simd -fopenmp  -ffreestanding -fopt-info-vec-all=report.lst -ffast-math -march=armv8.2-a -mtune=tsv110 -Wno-aggressive-loop-optimizations
+    	Flags = -D __USE_KUNPENG_920__ -O2 -std=c++17 -fno-trapping-math -fopenmp-simd -fopenmp  -ffreestanding -fopt-info-vec-all=report.lst -ffast-math -march=armv8.2-a -mtune=tsv110 #-Wno-aggressive-loop-optimizations
     endif
 
     ifeq ($(ARCH),intel)
@@ -32,7 +32,7 @@ endif
 
 all: create_folders kernels algorithms
 
-kernels: scatter_ker gather_ker fma_ker compute_latency_ker lehmer_ker L1_bandwidth_ker fib_ker
+kernels: scatter_ker gather_ker fma_ker compute_latency_ker lehmer_ker L1_bandwidth_ker fib_ker dense_vec_ker
 
 algorithms: gemm_alg norm_alg stencil_1D_alg primes_alg
 
