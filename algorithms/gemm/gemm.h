@@ -38,6 +38,8 @@ template <typename AT>
 void kernel(AT* A, AT *B, AT*C, size_t size)
 {
     AT alpha = 1.0, beta = 0.0;
+    #ifdef __USE_INTEL__
     cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
                 size, size, size, alpha, A, size, B, size, beta, C, size);
+    #endif
 }

@@ -22,18 +22,19 @@ exec_params = {"gather_ker": {"length": "3GB",
                            " -opt-mode gen -datatype dbl",
                            " -opt-mode opt -datatype flt",
                            " -opt-mode opt -datatype dbl"],
-               "compute_latency_ker": "",
-               "scalar_ker": "",
-               "L1_bandwidth_ker": "",
+               "compute_latency_ker": [""],
+               "scalar_ker": [""],
+               "L1_bandwidth_ker": [""],
                "gemm_alg": [" -size 10000 "],
                "stencil_1D_alg": [" -size 100000000 -r 1",
                                   " -size 100000000 -r 3",
                                   " -size 100000000 -r 5",
                                   " -size 100000000 -r 7",
-                                  " -size 100000000 -r 9"]}
+                                  " -size 100000000 -r 9"],
+               "primes_alg": [" -size 100000 "]}
 
 
-generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float"}
+generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float", "primes_alg": "scalar"}
 generic_memory_bound = {"stencil_1D_alg": "L1"}
 
 
