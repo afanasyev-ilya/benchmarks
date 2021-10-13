@@ -30,7 +30,7 @@ void call_kernel(Parser &_parser)
     for(int i = 0; i < iterations; i++)
 	{
 		counter.start_timing();
-        re_init(a, size);
+        //re_init(a, size);
 
 		kernel(_parser.get_mode(), a, b, c, d, e, size);
 
