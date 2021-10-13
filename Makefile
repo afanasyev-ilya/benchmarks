@@ -32,9 +32,9 @@ endif
 
 all: create_folders kernels algorithms
 
-kernels: scatter_ker gather_ker fma_ker compute_latency_ker scalar_ker L1_bandwidth
+kernels: scatter_ker gather_ker fma_ker compute_latency_ker scalar_ker L1_bandwidth_ker
 
-algorithms: gemm_alg
+algorithms: gemm_alg norm_alg stencil_1D_alg
 
 %_ker: %_k.o create_folders
 	$(ARCH_COMPILER) object_files/$< $(Library_Path) $(Libraries) -o ./bin/$@

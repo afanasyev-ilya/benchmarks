@@ -25,10 +25,16 @@ exec_params = {"gather_ker": {"length": "3GB",
                "compute_latency_ker": "",
                "scalar_ker": "",
                "L1_bandwidth_ker": "",
-               "gemm_alg": " -size 10000 "}
+               "gemm_alg": [" -size 10000 "],
+               "stencil_1D_alg": [" -size 100000000 -r 1",
+                                  " -size 100000000 -r 3",
+                                  " -size 100000000 -r 5",
+                                  " -size 100000000 -r 7",
+                                  " -size 100000000 -r 9"]}
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float"}
+generic_memory_bound = {"stencil_1D_alg": "L1"}
 
 
 def run_benchmarks(benchmarks_list, options):
@@ -43,6 +49,9 @@ def run_benchmarks(benchmarks_list, options):
         elif benchmark_name in generic_compute_bound.keys():
             generic_compute_bound_benchmark(benchmark_name, exec_params[benchmark_name], options,
                                             generic_compute_bound[benchmark_name])
+        elif benchmark_name in generic_memory_bound.keys():
+            generic_memory_bound_benchmark(benchmark_name, exec_params[benchmark_name], options,
+                                            generic_memory_bound[benchmark_name])
         else:
             generic_benchmark(benchmark_name, [], options)
 
@@ -93,14 +102,27 @@ def fma_benchmark(benchmark_name, benchmark_parameters, options):
 
 
 def generic_compute_bound_benchmark(benchmark_name, benchmark_parameters, options, roof_name):
-    cmd = "./bin/" + benchmark_name + " " + benchmark_parameters
-    string_output = run_and_wait(cmd, options)
-    timings = parse_timings(string_output)
-    perf = timings["avg_flops"]
-    peak_values = platform_specs[options.arch]
-    print("SUSTAINED PERFORMANCE : " + str("{:.1f}".format(perf)) + " GFLOP/s, " +
-          str("{:.1f}".format(100.0*perf/peak_values["peak_performances"][roof_name])) + "% of peak[" +
-          str(peak_values["peak_performances"][roof_name]) + " GFLOP/s]")
+    for params in benchmark_parameters:
+        cmd = "./bin/" + benchmark_name + " " + params
+        string_output = run_and_wait(cmd, options)
+        timings = parse_timings(string_output)
+        perf = timings["avg_flops"]
+        peak_values = platform_specs[options.arch]
+        print("SUSTAINED PERFORMANCE : " + str("{:.1f}".format(perf)) + " GFLOP/s, " +
+              str("{:.1f}".format(100.0*perf/peak_values["peak_performances"][roof_name])) + "% of peak[" +
+              str(peak_values["peak_performances"][roof_name]) + " GFLOP/s]")
+
+
+def generic_memory_bound_benchmark(benchmark_name, benchmark_parameters, options, roof_name):
+    for params in benchmark_parameters:
+        cmd = "./bin/" + benchmark_name + " " + params
+        string_output = run_and_wait(cmd, options)
+        timings = parse_timings(string_output)
+        perf = timings["avg_bw"]
+        peak_values = platform_specs[options.arch]
+        print("SUSTAINED PERFORMANCE : " + str("{:.1f}".format(perf)) + " GB/s, " +
+              str("{:.1f}".format(100.0*perf/peak_values["bandwidths"][roof_name])) + "% of peak[" +
+              str(peak_values["bandwidths"][roof_name]) + " GB/s]")
 
 
 def l1_bandwidth_benchmark(benchmark_name, benchmark_parameters, options):
