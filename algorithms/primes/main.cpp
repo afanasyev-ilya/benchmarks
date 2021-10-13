@@ -27,8 +27,6 @@ void call_kernel(Parser &parser)
     }
 
     counter.print_average_counters(true);
-    counter.print_bw();
-    counter.print_flops();
 
     MemoryAPI::free_array(array);
 }

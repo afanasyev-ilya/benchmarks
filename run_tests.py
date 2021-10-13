@@ -23,7 +23,7 @@ exec_params = {"gather_ker": {"length": "3GB",
                            " -opt-mode opt -datatype flt",
                            " -opt-mode opt -datatype dbl"],
                "compute_latency_ker": [""],
-               "scalar_ker": [""],
+               "lehmer_ker": [""],
                "L1_bandwidth_ker": [""],
                "gemm_alg": [" -size 10000 "],
                "stencil_1D_alg": [" -size 100000000 -r 1",
@@ -31,10 +31,12 @@ exec_params = {"gather_ker": {"length": "3GB",
                                   " -size 100000000 -r 5",
                                   " -size 100000000 -r 7",
                                   " -size 100000000 -r 9"],
-               "primes_alg": [" -size 100000 "]}
+               "primes_alg": [" -size 100000 "],
+               "fib_ker": [" -size 100000000000 "]}
 
 
-generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float", "primes_alg": "scalar"}
+generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
+                         "primes_alg": "lehmer", "fib_ker": "scalar"}
 generic_memory_bound = {"stencil_1D_alg": "L1"}
 
 

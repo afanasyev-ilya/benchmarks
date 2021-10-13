@@ -3,7 +3,7 @@
 #define INNER_ITERATIONS 100
 #define NUM_OPERS 16
 
-#include "scalar.h"
+#include "lehmer.h"
 
 void call_kernel(Parser &_parser)
 {
