@@ -3,9 +3,9 @@
 
 typedef float base_type;
 
-void call_kernel(Parser &_parser)
+void call_kernel(Parser &parser)
 {
-    size_t size = _parser.get_size();
+    size_t size = parser.get_size();
     float *A, *B, *C;
     MemoryAPI::allocate_array(&A, size*size);
     MemoryAPI::allocate_array(&B, size*size);

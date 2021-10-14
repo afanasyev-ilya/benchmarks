@@ -12,19 +12,19 @@ typedef int index_type;
 
 #ifdef __USE_A64FX__
 typedef double base_type;
-typedef int index_type;
+typedef long long index_type;
 #endif
 
 #include "gather.h"
 
-void call_kernel(Parser &_parser)
+void call_kernel(Parser &parser)
 {
     #ifdef __USE_A64_FX__
     cout << " !!!!!!!!!!!! " << endl;
     #endif
 
-    size_t large_size = _parser.get_large_size() / sizeof(base_type);
-    size_t small_size = _parser.get_small_size() / sizeof(base_type);
+    size_t large_size = parser.get_large_size() / sizeof(base_type);
+    size_t small_size = parser.get_small_size() / sizeof(base_type);
 
     print_size("large_size", large_size*sizeof(base_type));
     print_size("small_size", small_size*sizeof(base_type));
@@ -48,11 +48,23 @@ void call_kernel(Parser &_parser)
 		counter.start_timing();
         re_init(small_data, small_size);
 
-		kernel(_parser.get_mode(), large_data, indexes, small_data, large_size);
+		kernel(parser.get_mode(), large_data, indexes, small_data, large_size);
 
 		counter.end_timing();
 		counter.update_counters();
 		counter.print_local_counters();
+
+		int error_count = 0;
+        for(size_t i = 0; i < large_size; i++)
+        {
+            if(small_data[indexes[i]] != large_data[i])
+            {
+                if(error_count < 20)
+                    cout << large_data[i] << " vs " << small_data[indexes[i]] << endl;
+                error_count++;
+            }
+        }
+        cout << "Error count: " << error_count << endl;
 	}
 
 	counter.print_average_counters(true);

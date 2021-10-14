@@ -17,7 +17,7 @@
 
 #include "compute_latency.h"
 
-void call_kernel(Parser &_parser)
+void call_kernel(Parser &parser)
 {
     size_t size = 1024*1024;
     cout << "DATA TYPE: " << "float" << endl;

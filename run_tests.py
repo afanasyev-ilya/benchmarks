@@ -4,7 +4,7 @@ import shutil
 import subprocess
 from scripts.roofline import platform_specs
 from scripts.helpers import sizeof_fmt,parse_timings,get_cores_count,get_arch,make_binaries
-from scripts.plot import plot_gather_or_scatter
+#from scripts.plot import plot_gather_or_scatter
 
 
 linear_length = 800000000
@@ -161,7 +161,8 @@ def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options):
         sizes.append(formatted_small_size)
         bandwidths.append(timings["avg_bw"])
         cur_small_size *= 2
-    plot_gather_or_scatter(benchmark_name, sizes, bandwidths)
+    print(bandwidths)
+    #plot_gather_or_scatter(benchmark_name, sizes, bandwidths)
 
 
 if __name__ == "__main__":

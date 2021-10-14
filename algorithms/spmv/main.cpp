@@ -76,10 +76,10 @@ void free(CSRMatrix &_matrix)
     MemoryAPI::free_array(_matrix.col_ids);
 }
 
-void call_kernel(Parser &_parser)
+void call_kernel(Parser &parser)
 {
-    size_t size = _parser.get_size();
-    size_t deg = _parser.get_deg();
+    size_t size = parser.get_size();
+    size_t deg = parser.get_deg();
 
     CSRMatrix matrix;
 
@@ -115,7 +115,7 @@ void call_kernel(Parser &_parser)
         counter.start_timing();
         #endif
 
-        kernel(matrix, x, y, _parser.get_mode());
+        kernel(matrix, x, y, parser.get_mode());
 
         #ifndef METRIC_RUN
         counter.end_timing();

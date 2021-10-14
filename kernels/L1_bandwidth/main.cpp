@@ -17,10 +17,10 @@ typedef float base_type;
 
 #include "L1_bandwidth.h"
 
-void call_kernel(Parser &_parser)
+void call_kernel(Parser &parser)
 {
     size_t size = LINEAR_SIZE;
-    int mode = _parser.get_mode();
+    int mode = parser.get_mode();
     base_type *a = new base_type[size];
     base_type *b = new base_type[size];
 

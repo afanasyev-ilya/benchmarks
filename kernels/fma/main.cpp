@@ -17,7 +17,7 @@
 
 #include "fma.h"
 
-void call_kernel_s(Parser &_parser)
+void call_kernel_s(Parser &parser)
 {
     size_t size = 1024*1024;
     cout << "DATA TYPE: " << "float" << endl;
@@ -39,7 +39,7 @@ void call_kernel_s(Parser &_parser)
     for(int i = 0; i < 10; i++) // heat runs
     {
         re_init(in_data, out_data, size);
-        kernel<float, SIMD_SIZE_S>(_parser.get_opt_mode(), in_data, out_data, size);
+        kernel<float, SIMD_SIZE_S>(parser.get_opt_mode(), in_data, out_data, size);
     }
 
     for(int i = 0; i < iterations; i++)
@@ -47,7 +47,7 @@ void call_kernel_s(Parser &_parser)
         counter.start_timing();
         re_init(in_data, out_data, size);
 
-        kernel<float, SIMD_SIZE_S>(_parser.get_opt_mode(), in_data, out_data, size);
+        kernel<float, SIMD_SIZE_S>(parser.get_opt_mode(), in_data, out_data, size);
 
         counter.end_timing();
         counter.update_counters();
@@ -60,7 +60,7 @@ void call_kernel_s(Parser &_parser)
     MemoryAPI::free_array(out_data);
 }
 
-void call_kernel_d(Parser &_parser)
+void call_kernel_d(Parser &parser)
 {
     size_t size = 1024*1024;
     cout << "DATA TYPE: " << "double" << endl;
@@ -81,7 +81,7 @@ void call_kernel_d(Parser &_parser)
     for(int i = 0; i < 10; i++) // heat runs
     {
         re_init(in_data, out_data, size);
-        kernel<double, SIMD_SIZE_D>(_parser.get_opt_mode(), in_data, out_data, size);
+        kernel<double, SIMD_SIZE_D>(parser.get_opt_mode(), in_data, out_data, size);
     }
 
     for(int i = 0; i < iterations; i++)
@@ -89,7 +89,7 @@ void call_kernel_d(Parser &_parser)
         counter.start_timing();
         re_init(in_data, out_data, size);
 
-        kernel<double, SIMD_SIZE_D>(_parser.get_opt_mode(), in_data, out_data, size);
+        kernel<double, SIMD_SIZE_D>(parser.get_opt_mode(), in_data, out_data, size);
 
         counter.end_timing();
         counter.update_counters();

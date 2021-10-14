@@ -4,9 +4,9 @@ typedef double base_type;
 
 #include "dense_vec.h"
 
-void call_kernel(Parser &_parser)
+void call_kernel(Parser &parser)
 {
-    size_t size = _parser.get_large_size() / sizeof(base_type);
+    size_t size = parser.get_large_size() / sizeof(base_type);
     print_size("large_size", size*sizeof(base_type));
 
     base_type *a, *b, *c, *d, *e;
@@ -20,7 +20,7 @@ void call_kernel(Parser &_parser)
     int elems_requested[6] = {2, 2, 3, 3, 4, 5};
     int ops_exec[6] = {1, 1, 1, 2, 2, 3};
 
-    size_t bytes_requested = ((size_t)size) * (elems_requested[_parser.get_mode()] * sizeof(base_type));
+    size_t bytes_requested = ((size_t)size) * (elems_requested[parser.get_mode()] * sizeof(base_type));
     size_t flops_requested = (size_t)size;
     auto counter = PerformanceCounter(bytes_requested, flops_requested);
     int iterations = LOC_REPEAT;
@@ -32,7 +32,7 @@ void call_kernel(Parser &_parser)
 		counter.start_timing();
         //re_init(a, size);
 
-		kernel(_parser.get_mode(), a, b, c, d, e, size);
+		kernel(parser.get_mode(), a, b, c, d, e, size);
 
 		counter.end_timing();
 		counter.update_counters();
