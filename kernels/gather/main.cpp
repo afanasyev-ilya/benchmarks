@@ -54,7 +54,7 @@ void call_kernel(Parser &parser)
 		counter.update_counters();
 		counter.print_local_counters();
 
-		int error_count = 0;
+		/*int error_count = 0;
         for(size_t i = 0; i < large_size; i++)
         {
             if(small_data[indexes[i]] != large_data[i])
@@ -64,7 +64,7 @@ void call_kernel(Parser &parser)
                 error_count++;
             }
         }
-        cout << "Error count: " << error_count << endl;
+        cout << "Error count: " << error_count << endl;*/
 	}
 
 	counter.print_average_counters(true);

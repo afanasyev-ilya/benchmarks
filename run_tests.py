@@ -24,7 +24,10 @@ exec_params = {"gather_ker": {"length": "3GB",
                            " -opt-mode opt -datatype dbl"],
                "compute_latency_ker": [""],
                "lehmer_ker": [""],
-               "L1_bandwidth_ker": [""],
+               "L1_bandwidth_ker": [" -mode 0",
+                                    " -mode 1",
+                                    " -mode 2",
+                                    " -mode 3"],
                "gemm_alg": [" -size 10000 "],
                "stencil_1D_alg": [" -size 100000000 -r 1",
                                   " -size 100000000 -r 3",
@@ -38,12 +41,18 @@ exec_params = {"gather_ker": {"length": "3GB",
                                  " -large-size 4GB -mode 2",
                                  " -large-size 4GB -mode 3",
                                  " -large-size 4GB -mode 4",
-                                 " -large-size 4GB -mode 5"]}
+                                 " -large-size 4GB -mode 5"],
+               "interconnect_band_ker": [" -large-size 4GB -mode 0",
+                                         " -large-size 4GB -mode 1",
+                                         " -large-size 4GB -mode 2",
+                                         " -large-size 4GB -mode 3"],
+               "interconnect_latency_ker": [" -large-size 4GB -mode 0",
+                                            " -large-size 4GB -mode 1"]}
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
                          "primes_alg": "scalar", "lehmer": "scalar", "fib_ker": "scalar"}
-generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM"}
+generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1"}
 
 
 def run_benchmarks(benchmarks_list, options):
@@ -53,8 +62,8 @@ def run_benchmarks(benchmarks_list, options):
             benchmark_gather_scatter(benchmark_name, exec_params[benchmark_name], options)
         elif benchmark_name == "fma_ker":
             fma_benchmark(benchmark_name, exec_params[benchmark_name], options)
-        elif benchmark_name == "L1_bandwidth_ker":
-            l1_bandwidth_benchmark(benchmark_name, exec_params[benchmark_name], options)
+        elif "interconnect" in benchmark_name:
+            benchmark_interconnect(benchmark_name, exec_params[benchmark_name], options)
         elif benchmark_name in generic_compute_bound.keys():
             generic_compute_bound_benchmark(benchmark_name, exec_params[benchmark_name], options,
                                             generic_compute_bound[benchmark_name])
@@ -68,6 +77,8 @@ def run_benchmarks(benchmarks_list, options):
 def run_and_wait(cmd, options):
     print("Running " + cmd)
     os.environ['OMP_NUM_THREADS'] = str(options.threads)
+    os.environ['OMP_PROC_BIND'] = "close"
+
     p = subprocess.Popen(cmd, shell=True,
                          stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE,
@@ -110,6 +121,17 @@ def fma_benchmark(benchmark_name, benchmark_parameters, options):
           str(peak_values["peak_performances"]["double"]) + " GFLOP/s]")
 
 
+def benchmark_interconnect(benchmark_name, benchmark_parameters, options):
+    for params in benchmark_parameters:
+        cmd = "./bin/" + benchmark_name + " " + params
+        old_threads = options.threads
+        options.threads = get_cores_count()*2 # TODO sockets count
+        string_output = run_and_wait(cmd, options)
+        options.threads = old_threads
+        timings = parse_timings(string_output)
+        print(timings)
+
+
 def generic_compute_bound_benchmark(benchmark_name, benchmark_parameters, options, roof_name):
     for params in benchmark_parameters:
         cmd = "./bin/" + benchmark_name + " " + params
@@ -132,17 +154,6 @@ def generic_memory_bound_benchmark(benchmark_name, benchmark_parameters, options
         print("SUSTAINED PERFORMANCE : " + str("{:.1f}".format(perf)) + " GB/s, " +
               str("{:.1f}".format(100.0*perf/peak_values["bandwidths"][roof_name])) + "% of peak[" +
               str(peak_values["bandwidths"][roof_name]) + " GB/s]")
-
-
-def l1_bandwidth_benchmark(benchmark_name, benchmark_parameters, options):
-    for mode in range(0, 4):
-        cmd = "./bin/" + benchmark_name + " -mode " + str(mode)
-        string_output = run_and_wait(cmd, options)
-        timings = parse_timings(string_output)
-        bw = timings["avg_bw"]
-        peak_l1_bandwidth = platform_specs[options.arch]["bandwidths"]["L1"]
-        print("SUSTAINED BANDWIDTH : " + str("{:.1f}".format(bw)) + " GB/s, " +
-              str("{:.1f}".format(100.0*bw/peak_l1_bandwidth)) + "% of peak[" + str(peak_l1_bandwidth) + " GB/s]")
 
 
 def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options):

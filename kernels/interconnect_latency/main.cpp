@@ -1,42 +1,37 @@
 #include "common/lib.h"
 
 typedef double base_type;
+typedef int index_type;
 
-#include "interconnect_band.h"
+#include "interconnect_latency.h"
 
 void call_kernel(Parser &parser)
 {
     size_t size = parser.get_large_size() / sizeof(base_type);
     print_size("size", size*sizeof(base_type));
 
-    base_type *a, *b, *c;
+    base_type *result, *accessed;
+    index_type *rand_indexes;
 
-    MemoryAPI::allocate_array(&a, size);
-    MemoryAPI::allocate_array(&b, size);
-    MemoryAPI::allocate_array(&c, size);
+    MemoryAPI::allocate_array(&result, size);
+    MemoryAPI::allocate_array(&accessed, size);
+    MemoryAPI::allocate_array(&rand_indexes, size);
 
     int mode = parser.get_mode();
 
-    size_t bytes_requested = 0;
-    size_t flops_requested = 0;
-    if(mode == 0 || mode == 1) {
-        bytes_requested = (size_t)(size / 2) * sizeof(base_type) * 3;
-        flops_requested = (size_t)(size / 2) * 2;
-    }
-    if(mode == 2 || mode == 3) {
-        bytes_requested = (size_t)(size) * sizeof(base_type) * 3;
-        flops_requested = (size_t)(size) * 2;
-    }
+    size_t bytes_requested = (size_t)(size) * (sizeof(base_type) * 2 + sizeof(index_type));
+    size_t flops_requested = (size_t)(size) * 2;
+
     auto counter = PerformanceCounter(bytes_requested, flops_requested);
     int iterations = LOC_REPEAT;
 
-    init(mode, a, b, c, size);
+    init(mode, result, accessed, rand_indexes, size, size);
 
     for(int i = 0; i < iterations; i++)
     {
         counter.start_timing();
 
-        kernel(mode, a, b, c, size);
+        kernel(mode, result, accessed, rand_indexes, size);
 
         counter.end_timing();
         counter.update_counters();
@@ -45,9 +40,9 @@ void call_kernel(Parser &parser)
 
     counter.print_average_counters(true);
 
-    MemoryAPI::free_array(a);
-    MemoryAPI::free_array(b);
-    MemoryAPI::free_array(c);
+    MemoryAPI::free_array(result);
+    MemoryAPI::free_array(accessed);
+    MemoryAPI::free_array(rand_indexes);
 }
 
 int main(int argc, char **argv)
