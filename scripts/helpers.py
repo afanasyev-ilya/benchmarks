@@ -20,7 +20,7 @@ def get_timing_from_file_line(line, timings):
 
 def parse_timings(output):  # collect time, perf and BW values
     lines = output.splitlines()
-    timings = {"avg_time": 0, "avg_bw": 0, "avg_flops": 0, "flops_per_byte": 0, "mem_efficiency": 0}
+    timings = {"avg_time": 0, "avg_bw": 0, "avg_flops": 0, "flops_per_byte": 0}
     for line in lines:
         timings = get_timing_from_file_line(line, timings)
     return timings

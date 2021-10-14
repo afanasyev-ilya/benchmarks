@@ -46,10 +46,10 @@ exec_params = {"gather_ker": {"length": "3GB",
                                          " -large-size 4GB -mode 1",
                                          " -large-size 4GB -mode 2",
                                          " -large-size 4GB -mode 3"],
-               "interconnect_latency_ker": [" -large-size 1GB -mode 0",
-                                            " -large-size 1GB -mode 1",
-                                            " -large-size 1GB -mode 2",
-                                            " -large-size 1GB -mode 3"]}
+               "interconnect_latency_ker": [" -large-size 2GB -mode 0",
+                                            " -large-size 2GB -mode 1",
+                                            " -large-size 2GB -mode 2",
+                                            " -large-size 2GB -mode 3"]}
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",

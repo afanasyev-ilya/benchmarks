@@ -32,6 +32,18 @@ ifeq ($(COMPILER),icpc)
   	Library_Path =
 endif
 
+ifeq ($(COMPILER),fccpx)
+	ARCH_COMPILER=fccpx
+	Include_Path = -I ./
+
+    ifeq ($(ARCH),a64fx)
+        Flags = -D __USE_A64FX__ -O2 -std=c++17 -Kfast,openmp -Nfjomplib -mcmodel=large -D_A64FX -Kzfill
+    endif
+
+  	Libraries = -fopenmp
+  	Library_Path =
+endif
+
 .DEFAULT_GOAL := all
 
 all: create_folders kernels algorithms
