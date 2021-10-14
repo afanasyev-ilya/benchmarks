@@ -82,3 +82,21 @@ def get_arch():  # returns architecture, eigher kunpeng or intel_xeon
         if "AMD" in vendor_line:
             architecture = "amd_epyc"
     return architecture
+
+
+def make_binaries():
+    arch = get_arch()
+    arch_params = ""
+    if "intel" in arch:
+        arch_params = "CXX=icpc ARCH=intel"
+    elif "kunpeng" in arch:
+        arch_params = "CXX=g++ ARCH=kunpeng"
+    else:
+        raise Exception("Unsupported architecture for compilation")
+
+    cmd = "make " + arch_params
+    p = subprocess.Popen(cmd, shell=True,
+                         stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    p.wait()

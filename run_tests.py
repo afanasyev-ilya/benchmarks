@@ -3,7 +3,7 @@ import optparse
 import shutil
 import subprocess
 from scripts.roofline import platform_specs
-from scripts.helpers import sizeof_fmt,parse_timings,get_cores_count,get_arch
+from scripts.helpers import sizeof_fmt,parse_timings,get_cores_count,get_arch,make_binaries
 from scripts.plot import plot_gather_or_scatter
 
 
@@ -42,7 +42,7 @@ exec_params = {"gather_ker": {"length": "3GB",
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
-                         "primes_alg": "lehmer", "fib_ker": "scalar"}
+                         "primes_alg": "scalar", "lehmer": "scalar", "fib_ker": "scalar"}
 generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM"}
 
 
@@ -185,7 +185,7 @@ if __name__ == "__main__":
                       help="specify thread number", default=get_cores_count())
     parser.add_option('-a', '--arch',
                       action="store", dest="arch",
-                      help="specify thread number", default=get_arch())
+                      help="specify target architecture", default=get_arch())
 
     options, args = parser.parse_args()
 
@@ -196,6 +196,7 @@ if __name__ == "__main__":
     benchmarks_list = []
     if options.bench == "all":
         benchmarks_list = exec_params.keys()
+        make_binaries()
     else:
         benchmarks_list = options.bench.split(",")
     run_benchmarks(benchmarks_list, options)

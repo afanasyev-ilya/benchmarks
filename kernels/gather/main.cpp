@@ -1,12 +1,28 @@
 #include "common/lib.h"
 
+#ifdef __USE_INTEL__
 typedef double base_type;
 typedef int index_type;
+#endif
+
+#ifdef __USE_KUNPENG_920__
+typedef double base_type;
+typedef int index_type;
+#endif
+
+#ifdef __USE_A64FX__
+typedef double base_type;
+typedef int index_type;
+#endif
 
 #include "gather.h"
 
 void call_kernel(Parser &_parser)
 {
+    #ifdef __USE_A64_FX__
+    cout << " !!!!!!!!!!!! " << endl;
+    #endif
+
     size_t large_size = _parser.get_large_size() / sizeof(base_type);
     size_t small_size = _parser.get_small_size() / sizeof(base_type);
 

@@ -12,6 +12,10 @@ ifeq ($(COMPILER),g++)
         Flags = -D __USE_INTEL__ -O2 -std=c++17 -fno-trapping-math -fopenmp-simd -fopenmp  -ffreestanding -fopt-info-vec-all=report.lst -ffast-math -march=skylake-avx512
     endif
 
+    ifeq ($(ARCH),a64fx)
+        Flags = -D __USE_A64FX__ -O2 -std=c++17 -fopenmp -std=c++11 -Ofast -mcpu=native -fopenmp-simd -funroll-loops -fno-builtin -msve-vector-bits=512 -march=armv8.2-a+sve ${OPENMP} -Wno-write-strings
+    endif
+
   	Libraries = -fopenmp
   	Library_Path =
 endif

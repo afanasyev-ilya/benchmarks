@@ -4,7 +4,9 @@
 #include <immintrin.h>
 #endif
 
-using std::string;
+#ifdef __USE_ARM_SVE__
+#include <arm_sve.h>
+#endif
 
 template<typename IT, typename DT>
 void init(DT *a, IT *b, DT *c, size_t large_size, size_t small_size)
@@ -63,6 +65,17 @@ void gather_optimized(DT *large, IT *indexes, const DT * __restrict__ small, siz
         idx = _mm256_load_si256((__m256i *)(&indexes[i]));
         val = _mm512_i32gather_pd(idx, small, 8);
         _mm512_store_pd(&large[i], val);
+    }
+    #endif
+
+    #ifdef __USE_ARM_SVE__
+    #pragma omp parallel for schedule(static)
+    for(size_t i = 0; i < size; i += 8)
+    {
+        svbool_t pg = svwhilelt_b64(i, size);
+        svuint64_t vec_idx = svld1sw_u64(pg, indexes + i);
+        svfloat64_t vec_res = svld1_gather_index(pg, small, vec_idx);
+        svst1(svptrue_b64(), &(large[i]), vec_res);
     }
     #endif
 }
