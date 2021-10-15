@@ -5,6 +5,7 @@ import subprocess
 from scripts.roofline import platform_specs
 from scripts.helpers import sizeof_fmt,parse_timings,get_cores_count,get_arch,make_binaries
 #from scripts.plot import plot_gather_or_scatter
+import json
 
 
 linear_length = 800000000
@@ -58,22 +59,27 @@ generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_ban
 
 
 def run_benchmarks(benchmarks_list, options):
+    testing_results = {"arch_name": options.arch}
     for benchmark_name in benchmarks_list:
         print("\n DOING " + benchmark_name + " BENCHMARK\n")
         if benchmark_name == "gather_ker" or benchmark_name == "scatter_ker":
-            benchmark_gather_scatter(benchmark_name, exec_params[benchmark_name], options)
+            benchmark_gather_scatter(benchmark_name, exec_params[benchmark_name], options, testing_results)
         elif benchmark_name == "fma_ker":
-            fma_benchmark(benchmark_name, exec_params[benchmark_name], options)
+            fma_benchmark(benchmark_name, exec_params[benchmark_name], options, testing_results)
         elif "interconnect" in benchmark_name:
-            benchmark_interconnect(benchmark_name, exec_params[benchmark_name], options)
+            benchmark_interconnect(benchmark_name, exec_params[benchmark_name], options, testing_results)
         elif benchmark_name in generic_compute_bound.keys():
             generic_compute_bound_benchmark(benchmark_name, exec_params[benchmark_name], options,
-                                            generic_compute_bound[benchmark_name])
+                                            generic_compute_bound[benchmark_name], testing_results)
         elif benchmark_name in generic_memory_bound.keys():
             generic_memory_bound_benchmark(benchmark_name, exec_params[benchmark_name], options,
-                                            generic_memory_bound[benchmark_name])
+                                            generic_memory_bound[benchmark_name], testing_results)
         else:
-            generic_benchmark(benchmark_name, [], options)
+            generic_benchmark(benchmark_name, [], options, testing_results)
+
+    with open('./output/results.json', 'w') as outfile:
+        print(json.dumps(testing_results, indent=4))
+        json.dump(testing_results, outfile)
 
 
 def run_and_wait(cmd, options):
@@ -92,13 +98,13 @@ def run_and_wait(cmd, options):
     return string_output
 
 
-def generic_benchmark(benchmark_name, benchmark_parameters, options):
+def generic_benchmark(benchmark_name, benchmark_parameters, options, testing_results):
     cmd = "./bin/" + benchmark_name
     string_output = run_and_wait(cmd, options)
     print(parse_timings(string_output))
 
 
-def fma_benchmark(benchmark_name, benchmark_parameters, options):
+def fma_benchmark(benchmark_name, benchmark_parameters, options, testing_results):
     flops = []
     for params in benchmark_parameters:
         cmd = "./bin/" + benchmark_name + " " + params
@@ -122,8 +128,15 @@ def fma_benchmark(benchmark_name, benchmark_parameters, options):
           str("{:.1f}".format(100.0*max_dbl_flops/peak_values["peak_performances"]["double"])) + "% of peak[" +
           str(peak_values["peak_performances"]["double"]) + " GFLOP/s]")
 
+    testing_results[benchmark_name] = {}
+    testing_results[benchmark_name]["flt_perf"] = max_flt_flops
+    testing_results[benchmark_name]["flt_efficiency"] = 100.0*max_flt_flops/peak_values["peak_performances"]["float"]
+    testing_results[benchmark_name]["dbl_perf"] = max_dbl_flops
+    testing_results[benchmark_name]["dbl_efficiency"] = 100.0*max_dbl_flops/peak_values["peak_performances"]["double"]
 
-def benchmark_interconnect(benchmark_name, benchmark_parameters, options):
+
+def benchmark_interconnect(benchmark_name, benchmark_parameters, options, testing_results):
+    bandwidths = []
     for params in benchmark_parameters:
         cmd = "./bin/" + benchmark_name + " " + params
         old_threads = options.threads
@@ -131,10 +144,18 @@ def benchmark_interconnect(benchmark_name, benchmark_parameters, options):
         string_output = run_and_wait(cmd, options)
         options.threads = old_threads
         timings = parse_timings(string_output)
-        print(timings)
+        bandwidths.append(timings["avg_bw"])
+
+    testing_results[benchmark_name] = {}
+    testing_results[benchmark_name]["local_access_by_one_socket"] = bandwidths[0]
+    testing_results[benchmark_name]["remote_access_by_one_socket"] = bandwidths[1]
+    testing_results[benchmark_name]["local_access_by_both_sockets"] = bandwidths[2]
+    testing_results[benchmark_name]["remote_access_by_both_sockets"] = bandwidths[3]
 
 
-def generic_compute_bound_benchmark(benchmark_name, benchmark_parameters, options, roof_name):
+def generic_compute_bound_benchmark(benchmark_name, benchmark_parameters, options, roof_name, testing_results):
+    testing_results[benchmark_name] = {}
+
     for params in benchmark_parameters:
         cmd = "./bin/" + benchmark_name + " " + params
         string_output = run_and_wait(cmd, options)
@@ -144,21 +165,29 @@ def generic_compute_bound_benchmark(benchmark_name, benchmark_parameters, option
         print("SUSTAINED PERFORMANCE : " + str("{:.1f}".format(perf)) + " GFLOP/s, " +
               str("{:.1f}".format(100.0*perf/peak_values["peak_performances"][roof_name])) + "% of peak[" +
               str(peak_values["peak_performances"][roof_name]) + " GFLOP/s]")
+        testing_results[benchmark_name][params] = {}
+        testing_results[benchmark_name][params]["performance"] = perf
+        testing_results[benchmark_name][params]["efficiency"] = 100.0 *perf / peak_values["peak_performances"][roof_name]
 
 
-def generic_memory_bound_benchmark(benchmark_name, benchmark_parameters, options, roof_name):
+def generic_memory_bound_benchmark(benchmark_name, benchmark_parameters, options, roof_name, testing_results):
+    testing_results[benchmark_name] = {}
+
     for params in benchmark_parameters:
         cmd = "./bin/" + benchmark_name + " " + params
         string_output = run_and_wait(cmd, options)
         timings = parse_timings(string_output)
-        perf = timings["avg_bw"]
+        bw = timings["avg_bw"]
         peak_values = platform_specs[options.arch]
-        print("SUSTAINED PERFORMANCE : " + str("{:.1f}".format(perf)) + " GB/s, " +
-              str("{:.1f}".format(100.0*perf/peak_values["bandwidths"][roof_name])) + "% of peak[" +
+        print("SUSTAINED PERFORMANCE : " + str("{:.1f}".format(bw)) + " GB/s, " +
+              str("{:.1f}".format(100.0*bw/peak_values["bandwidths"][roof_name])) + "% of peak[" +
               str(peak_values["bandwidths"][roof_name]) + " GB/s]")
+        testing_results[benchmark_name][params] = {}
+        testing_results[benchmark_name][params]["bandwidth"] = bw
+        testing_results[benchmark_name][params]["efficiency"] = 100.0*bw/peak_values["bandwidths"][roof_name]
 
 
-def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options):
+def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options, testing_results):
     cur_small_size = 1024
     sizes = []
     bandwidths = []
@@ -174,7 +203,10 @@ def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options):
         sizes.append(formatted_small_size)
         bandwidths.append(timings["avg_bw"])
         cur_small_size *= 2
-    print(bandwidths)
+
+    testing_results[benchmark_name] = {}
+    for cur_size, cur_band in zip(sizes, bandwidths):
+        testing_results[benchmark_name][cur_size] = cur_band
     #plot_gather_or_scatter(benchmark_name, sizes, bandwidths)
 
 
