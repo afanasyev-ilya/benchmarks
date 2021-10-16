@@ -1,12 +1,23 @@
 import subprocess
+import re
 
 
-def sizeof_fmt(num, suffix="B"):
+def b2t(num, suffix="B"):
     for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
         if abs(num) < 1024.0:
             return f"{int(num)}{unit}{suffix}"
         num /= 1024.0
     return f"{int(num)}Yi{suffix}"
+
+
+def t2b(value):
+    match = re.match(r"(\d+)(\w+)", value, re.I)
+    if match:
+        items = match.groups()
+        num = int(items[0])
+        suffix = items[1]
+        multiplier = {"B": 1, "KB": 1024, "MB": 1024*1024, "GB": 1024*1024*1024}
+        return num * multiplier[suffix]
 
 
 def get_timing_from_file_line(line, timings):

@@ -3,11 +3,12 @@ import optparse
 import shutil
 import subprocess
 from scripts.roofline import platform_specs
-from scripts.helpers import sizeof_fmt,parse_timings,get_cores_count,get_arch,make_binaries
+from scripts.helpers import b2t,parse_timings,get_cores_count,get_arch,make_binaries
 #from scripts.plot import plot_gather_or_scatter
 import json
 import pprint
 import xlsxwriter
+import collections
 
 
 SHEET_NAME = "main_stats"
@@ -49,7 +50,8 @@ def compute_latency_ker(worksheet, row, col, name, data, arch_name):
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
     data = list(data.values())[0]
 
-    worksheet.write(row, 0, "compute latency kernel", cell_format)
+    worksheet.write(row, 0, "compute latency kernel\n"
+                            "performs sqrt and fma operations", cell_format)
     worksheet.write(row, 1, "cpu-bound -> vector-bound -> latency-bound", cell_format)
 
     flt_stats = str("Performance:\n " + str("{:.1f}".format(data["performance"])) + " GFLOP/s, " +
@@ -140,8 +142,8 @@ def L1_bandwidth_ker(worksheet, row, col, name, data, arch_name):
 def dense_vec_ker(worksheet, row, col, name, data, arch_name):
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
 
-    worksheet.merge_range(row, 0, row + 5, 0, "dense vectors kernel (DAXPY)", cell_format)
-    worksheet.merge_range(row, 1, row + 5, 1, "memory-bound -> bandwidth-bound -> DRAM-bound", cell_format)
+    worksheet.merge_range(row, 0, row + 4, 0, "dense vectors kernel (DAXPY)", cell_format)
+    worksheet.merge_range(row, 1, row + 4, 1, "memory-bound -> bandwidth-bound -> DRAM-bound", cell_format)
     num_runs = 0
 
     num_vectors = ["2", "2", "3", "3", "4", "5"]
@@ -149,6 +151,26 @@ def dense_vec_ker(worksheet, row, col, name, data, arch_name):
         bw_stats = str("num vectors: " + num_vectors[num_runs] + "\n" + str("{:.1f}".format(exec_param["bandwidth"])) + " GB/s, " +
                     str("{:.1f}".format(exec_param["efficiency"])) + "% of peak")
         worksheet.write(row + num_runs, col, str(bw_stats), cell_format)
+        num_runs += 1
+    return row + num_runs
+
+
+def interconnect_band_ker(worksheet, row, col, name, data, arch_name):
+    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+
+    worksheet.merge_range(row, 0, row + 4, 0, "interconnect kernel \n, "
+                                              "performs either local or remote sequential memory accesses", cell_format)
+    worksheet.merge_range(row, 1, row + 4, 1, "memory-bound -> bandwidth-bound -> interconnect-bound", cell_format)
+    num_runs = 0
+
+    mode_descriptions = ["one socket accesses local data",
+                         "one socket accesses remote data",
+                         "both sockets access local data",
+                         "both sockets access remote data"]
+    for bandwidth in list(data.values()):
+        worksheet.write(row + num_runs, col, "mode: " + mode_descriptions[num_runs], cell_format)
+        bw_stats = "bandwidth: " + str("{:.1f}".format(bandwidth)) + " GB/s"
+        worksheet.write(row + num_runs, col + 1, str(bw_stats), cell_format)
         num_runs += 1
     return row + num_runs
 
@@ -250,10 +272,13 @@ if __name__ == "__main__":
         with open(file_name, 'r') as f:
             data = f.read()
         testing_results = json.loads(data)
+
+        ordered_data = collections.OrderedDict(sorted(testing_results.items(), key=lambda x: x.modified))
+
         arch_name = testing_results["arch_name"]
 
-        worksheet.set_column(3*index + 2, 3*index + 2, 25)
-        add_stats_to_table(testing_results, worksheet, 2*index + 2)
+        worksheet.set_column(3*index + 1, 3*index + 3, 25)
+        add_stats_to_table(ordered_data, worksheet, 3*index + 2)
         create_diagrams(worksheet, arch_name, first_gather_row, last_gather_row, 3*index + 2, (index + 1)*10)
         create_diagrams(worksheet, arch_name, first_scatter_row, last_scatter_row, 3*index + 2, (index + 1)*20)
     workbook.close()

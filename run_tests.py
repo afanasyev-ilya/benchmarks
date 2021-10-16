@@ -3,7 +3,7 @@ import optparse
 import shutil
 import subprocess
 from scripts.roofline import platform_specs
-from scripts.helpers import sizeof_fmt,parse_timings,get_cores_count,get_arch,make_binaries
+from scripts.helpers import b2t,parse_timings,get_cores_count,get_arch,make_binaries,t2b
 #from scripts.plot import plot_gather_or_scatter
 import json
 
@@ -13,9 +13,12 @@ max_threads = 64
 
 
 # all upper borders are inclusive
-exec_params = {"gather_ker": {"length": "3GB",
-                              "min_small_size": "1KB",
-                              "max_small_size": "512MB"},
+exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
+                                              "step": "1KB"},
+                              "LLC_latency": {"length": "3GB",
+                                              "step": "1MB"},
+                              "DRAM_latency": {"length": "3GB",
+                                               "step": "50MB"}},
                "scatter_ker": {"length": "3GB",
                                "min_small_size": "1KB",
                                "max_small_size": "512MB"},
@@ -62,8 +65,10 @@ def run_benchmarks(benchmarks_list, options):
     testing_results = {"arch_name": options.arch}
     for benchmark_name in benchmarks_list:
         print("\n DOING " + benchmark_name + " BENCHMARK\n")
-        if benchmark_name == "gather_ker" or benchmark_name == "scatter_ker":
-            benchmark_gather_scatter(benchmark_name, exec_params[benchmark_name], options, testing_results)
+        if benchmark_name == "gather_ker":
+            benchmark_gather(benchmark_name, exec_params[benchmark_name], options, testing_results)
+        elif benchmark_name == "scatter_ker":
+            benchmark_scatter(benchmark_name, exec_params[benchmark_name], options, testing_results)
         elif benchmark_name == "fma_ker":
             fma_benchmark(benchmark_name, exec_params[benchmark_name], options, testing_results)
         elif "interconnect" in benchmark_name:
@@ -187,12 +192,42 @@ def generic_memory_bound_benchmark(benchmark_name, benchmark_parameters, options
         testing_results[benchmark_name][params]["efficiency"] = 100.0*bw/peak_values["bandwidths"][roof_name]
 
 
-def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options, testing_results):
+def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max_size, step_size):
+    cur_small_size = min_size
+    sizes = []
+    bandwidths = []
+
+    while cur_small_size <= max_size:
+        formatted_small_size = b2t(cur_small_size)
+        formatted_large_size = "1GB"
+
+        cmd = "./bin/" + benchmark_name + " -small-size " + formatted_small_size + " -large-size " + \
+              formatted_large_size
+        string_output = run_and_wait(cmd, options)
+        timings = parse_timings(string_output)
+
+        sizes.append(formatted_small_size)
+        bandwidths.append(timings["avg_bw"])
+        cur_small_size += step_size
+
+    testing_results[benchmark_name][mode] = {}
+    for cur_size, cur_band in zip(sizes, bandwidths):
+        testing_results[benchmark_name][mode][cur_size] = cur_band
+
+
+def benchmark_gather(benchmark_name, benchmark_parameters, options, testing_results):
+    testing_results[benchmark_name] = {}
+    benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  t2b("64KB"), t2b("1KB"))
+    benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, t2b("512KB"),  t2b("64MB"), t2b("512KB"))
+    benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, t2b("64MB"),  t2b("1GB"), t2b("50MB"))
+
+
+def benchmark_scatter(benchmark_name, benchmark_parameters, options, testing_results):
     cur_small_size = 1024
     sizes = []
     bandwidths = []
     while cur_small_size <= 1024 * 1024 * 512:
-        formatted_small_size = sizeof_fmt(cur_small_size)
+        formatted_small_size = b2t(cur_small_size)
         formatted_large_size = "1GB"
 
         cmd = "./bin/" + benchmark_name + " -small-size " + formatted_small_size + " -large-size " +\
@@ -207,7 +242,6 @@ def benchmark_gather_scatter(benchmark_name, benchmark_parameters, options, test
     testing_results[benchmark_name] = {}
     for cur_size, cur_band in zip(sizes, bandwidths):
         testing_results[benchmark_name][cur_size] = cur_band
-    #plot_gather_or_scatter(benchmark_name, sizes, bandwidths)
 
 
 if __name__ == "__main__":
