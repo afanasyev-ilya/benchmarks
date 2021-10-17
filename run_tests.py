@@ -3,9 +3,10 @@ import optparse
 import shutil
 import subprocess
 from scripts.roofline import platform_specs
-from scripts.helpers import b2t,parse_timings,get_cores_count,get_arch,make_binaries,t2b
+from scripts.helpers import b2t,parse_timings,get_cores_count,get_arch,make_binaries,t2b,get_cache_size
 #from scripts.plot import plot_gather_or_scatter
 import json
+import sys
 
 
 linear_length = 800000000
@@ -57,8 +58,8 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
-                         "primes_alg": "scalar", "lehmer": "scalar", "fib_ker": "scalar"}
-generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1"}
+                         "primes_alg": "scalar", "lehmer_ker": "scalar", "fib_ker": "scalar"}
+generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1", "norm_alg": "DRAM"}
 
 
 def run_benchmarks(benchmarks_list, options):
@@ -82,7 +83,7 @@ def run_benchmarks(benchmarks_list, options):
         else:
             generic_benchmark(benchmark_name, [], options, testing_results)
 
-    with open('./output/results.json', 'w') as outfile:
+    with open("./output/" + options.arch + ".json", 'w') as outfile:
         print(json.dumps(testing_results, indent=4))
         json.dump(testing_results, outfile)
 
@@ -199,7 +200,7 @@ def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max
 
     while cur_small_size <= max_size:
         formatted_small_size = b2t(cur_small_size)
-        formatted_large_size = "1GB"
+        formatted_large_size = "2GB"
 
         cmd = "./bin/" + benchmark_name + " -small-size " + formatted_small_size + " -large-size " + \
               formatted_large_size
@@ -210,16 +211,31 @@ def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max
         bandwidths.append(timings["avg_bw"])
         cur_small_size += step_size
 
-    testing_results[benchmark_name][mode] = {}
+    max_bw = 0
+    max_pos = 0
+    min_bw = sys.float_info.max
+    min_pos = 0
+    testing_results[benchmark_name + "_" + mode] = {}
     for cur_size, cur_band in zip(sizes, bandwidths):
-        testing_results[benchmark_name][mode][cur_size] = cur_band
+        if cur_band > max_bw:
+            max_bw = cur_band
+            max_pos = cur_size
+        if cur_band < min_bw:
+            min_bw = cur_band
+            min_pos = cur_size
+        testing_results[benchmark_name + "_" + mode][cur_size] = cur_band
+    print("min: " + str(min_bw) + " GB/s " + " at " + str(min_pos))
+    print("max: " + str(max_bw) + " GB/s " + " at " + str(max_pos))
 
 
 def benchmark_gather(benchmark_name, benchmark_parameters, options, testing_results):
     testing_results[benchmark_name] = {}
-    benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  t2b("64KB"), t2b("1KB"))
-    benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, t2b("512KB"),  t2b("64MB"), t2b("512KB"))
-    benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, t2b("64MB"),  t2b("1GB"), t2b("50MB"))
+    l1_size = get_cache_size("L1")
+    l2_size = get_cache_size("L2")
+    l3_size = get_cache_size("L3")
+    benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  l1_size, t2b("1KB"))
+    benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, l2_size,  l3_size, t2b("1MB"))
+    benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, l3_size,  t2b("1GB"), t2b("50MB"))
 
 
 def benchmark_scatter(benchmark_name, benchmark_parameters, options, testing_results):

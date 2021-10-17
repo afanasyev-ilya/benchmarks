@@ -18,6 +18,21 @@ first_scatter_row = 0
 last_scatter_row = 0
 
 
+ordered_benchmarks = ["fma_ker", "gemm_alg",  # compute -> vector -> unit
+                      "compute_latency_ker",  # compute -> vector -> latency
+                      "fib_ker",  # compute -> scalar -> unit
+                      "lemher_ker", "primes_alg",  # compute -> scalar -> latency
+                      "L1_bandwidth_ker",  # memory -> bandwidth -> L1
+                      # LLC
+                      "dense_vec_ker", "norm_alg",  # memory -> bandwidth -> DRAM
+                      "interconnect_band_ker",  # memory -> bandwidth -> interconnect
+                      "gather_ker_L1_latency",  # memory -> bandwidth -> L1
+                      "gather_ker_LLC_latency",  # memory -> bandwidth -> LLC
+                      "gather_ker_DRAM_latency",  # memory -> bandwidth -> DRAM
+                      "interconnect_latency_ker",  # memory -> latency -> interconnect
+]
+
+
 def fma_ker(worksheet, row, col, name, data, arch_name):
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
     worksheet.write(row, 0, "FMA kernel", cell_format)
@@ -237,7 +252,9 @@ def add_stats_to_table(testing_results, worksheet, position):
     worksheet.write(0, position, arch_name)
 
     row = 1
-    for bench_name, bench_data in testing_results.items():
+    for bench_name in ordered_benchmarks:
+
+        bench_data = testing_results[bench_name]
         if bench_name == "arch_name":
             print("processing arch " + bench_data)
             row += 1
@@ -272,13 +289,10 @@ if __name__ == "__main__":
         with open(file_name, 'r') as f:
             data = f.read()
         testing_results = json.loads(data)
-
-        ordered_data = collections.OrderedDict(sorted(testing_results.items(), key=lambda x: x.modified))
-
         arch_name = testing_results["arch_name"]
 
         worksheet.set_column(3*index + 1, 3*index + 3, 25)
-        add_stats_to_table(ordered_data, worksheet, 3*index + 2)
+        add_stats_to_table(testing_results, worksheet, 3*index + 2)
         create_diagrams(worksheet, arch_name, first_gather_row, last_gather_row, 3*index + 2, (index + 1)*10)
         create_diagrams(worksheet, arch_name, first_scatter_row, last_scatter_row, 3*index + 2, (index + 1)*20)
     workbook.close()

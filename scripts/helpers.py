@@ -18,6 +18,19 @@ def t2b(value):
         suffix = items[1]
         multiplier = {"B": 1, "KB": 1024, "MB": 1024*1024, "GB": 1024*1024*1024}
         return num * multiplier[suffix]
+    return 1
+
+
+def get_cache_size(cache_name):
+    output = subprocess.check_output(["lscpu"])
+    cores = -1
+    for item in output.decode().split("\n"):
+        if cache_name in item:
+            tmp = item.strip()
+            l1_dat = item.split(":")[1]
+            numbers = re.findall(r'\d+', l1_dat)
+            l1_dat = numbers[0] + "KB"
+            return t2b(l1_dat)
 
 
 def get_timing_from_file_line(line, timings):
