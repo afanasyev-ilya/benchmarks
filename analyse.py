@@ -12,8 +12,14 @@ import collections
 
 
 SHEET_NAME = "main_stats"
-first_gather_row = 0
-last_gather_row = 0
+
+first_gather_L1_row = 0
+last_gather_L1_row = 0
+first_gather_LLC_row = 0
+last_gather_LLC_row = 0
+first_gather_DRAM_row = 0
+last_gather_DRAM_row = 0
+
 first_scatter_row = 0
 last_scatter_row = 0
 
@@ -91,19 +97,6 @@ def fib_ker(worksheet, row, col, name, data, arch_name):
     return row + 1
 
 
-def fib_ker(worksheet, row, col, name, data, arch_name):
-    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
-    data = list(data.values())[0]
-
-    worksheet.write(row, 0, "fibonachi kernel", cell_format)
-    worksheet.write(row, 1, "cpu-bound -> scalar-bound -> unit-bound", cell_format)
-
-    flt_stats = str("Performance:\n " + str("{:.1f}".format(data["performance"])) + " GFLOP/s, " +
-                    str("{:.1f}".format(data["efficiency"])) + "% of peak")
-    worksheet.write(row, col, str(flt_stats), cell_format)
-    return row + 1
-
-
 def primes_alg(worksheet, row, col, name, data, arch_name):
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
     data = list(data.values())[0]
@@ -160,8 +153,8 @@ def L1_bandwidth_ker(worksheet, row, col, name, data, arch_name):
 def dense_vec_ker(worksheet, row, col, name, data, arch_name):
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
 
-    worksheet.merge_range(row, 0, row + 4, 0, "dense vectors kernel (DAXPY)", cell_format)
-    worksheet.merge_range(row, 1, row + 4, 1, "memory-bound -> bandwidth-bound -> DRAM-bound", cell_format)
+    worksheet.merge_range(row, 0, row + 5, 0, "dense vectors kernel (DAXPY)", cell_format)
+    worksheet.merge_range(row, 1, row + 5, 1, "memory-bound -> bandwidth-bound -> DRAM-bound", cell_format)
     num_runs = 0
 
     num_vectors = ["2", "2", "3", "3", "4", "5"]
@@ -193,13 +186,13 @@ def interconnect_band_ker(worksheet, row, col, name, data, arch_name):
     return row + num_runs
 
 
-def gather_ker(worksheet, row, col, name, data, arch_name):
-    global first_gather_row
-    global last_gather_row
+def gather_ker_L1_latency(worksheet, row, col, name, data, arch_name):
+    global first_gather_L1_row
+    global last_gather_L1_row
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
 
-    worksheet.merge_range(row, 0, row + len(data) - 1, 0, "gather kernel", cell_format)
-    worksheet.merge_range(row, 1, row + len(data) - 1, 1, "aimed to benchmark L1/LLC/DRAM latency", cell_format)
+    worksheet.merge_range(row, 0, row + len(data) - 1, 0, "gather kernel L1 latency", cell_format)
+    worksheet.merge_range(row, 1, row + len(data) - 1, 1, "memory -> bandwidth -> L1 latency", cell_format)
 
     shift = 0
     for size, bw in data.items():
@@ -207,8 +200,48 @@ def gather_ker(worksheet, row, col, name, data, arch_name):
         worksheet.write(row + shift, col + 1, int(bw), cell_format)
         shift += 1
 
-    first_gather_row = row
-    last_gather_row = row + len(data) - 1
+    first_gather_L1_row = row
+    last_gather_L1_row = row + len(data) - 1
+
+    return row + len(data)
+
+
+def gather_ker_LLC_latency(worksheet, row, col, name, data, arch_name):
+    global first_gather_LLC_row
+    global last_gather_LLC_row
+    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+
+    worksheet.merge_range(row, 0, row + len(data) - 1, 0, "gather kernel LLC latency", cell_format)
+    worksheet.merge_range(row, 1, row + len(data) - 1, 1, "memory -> bandwidth -> LLC latency", cell_format)
+
+    shift = 0
+    for size, bw in data.items():
+        worksheet.write(row + shift, col, str(size), cell_format)
+        worksheet.write(row + shift, col + 1, int(bw), cell_format)
+        shift += 1
+
+    first_gather_LLC_row = row
+    last_gather_LLC_row = row + len(data) - 1
+
+    return row + len(data)
+
+
+def gather_ker_DRAM_latency(worksheet, row, col, name, data, arch_name):
+    global first_gather_DRAM_row
+    global last_gather_DRAM_row
+    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+
+    worksheet.merge_range(row, 0, row + len(data) - 1, 0, "gather kernel DRAM latency", cell_format)
+    worksheet.merge_range(row, 1, row + len(data) - 1, 1, "memory -> bandwidth -> DRAM latency", cell_format)
+
+    shift = 0
+    for size, bw in data.items():
+        worksheet.write(row + shift, col, str(size), cell_format)
+        worksheet.write(row + shift, col + 1, int(bw), cell_format)
+        shift += 1
+
+    first_gather_DRAM_row = row
+    last_gather_DRAM_row = row + len(data) - 1
 
     return row + len(data)
 
@@ -233,7 +266,7 @@ def scatter_ker(worksheet, row, col, name, data, arch_name):
     return row + len(data)
 
 
-def create_diagrams(worksheet, arch_name, first_row, last_row, col, diag_col):
+def create_diagrams(worksheet, arch_name, first_row, last_row, col, diag_row, diag_col, name):
     # Create a new chart object.
     chart = workbook.add_chart({'type': 'line'})
 
@@ -244,8 +277,10 @@ def create_diagrams(worksheet, arch_name, first_row, last_row, col, diag_col):
         'line':       {'color': 'red'},
         'name': arch_name})
 
+    chart.set_title({'name': name})
+
     # Insert the chart into the worksheet.
-    worksheet.insert_chart(1, diag_col, chart)
+    worksheet.insert_chart(diag_row, diag_col, chart)
 
 
 def add_stats_to_table(testing_results, worksheet, position):
@@ -296,7 +331,11 @@ if __name__ == "__main__":
 
         worksheet.set_column(3*index + 1, 3*index + 3, 25)
         add_stats_to_table(testing_results, worksheet, 3*index + 2)
-        create_diagrams(worksheet, arch_name, first_gather_row, last_gather_row, 3*index + 2, (index + 1)*10)
-        create_diagrams(worksheet, arch_name, first_scatter_row, last_scatter_row, 3*index + 2, (index + 1)*20)
+        create_diagrams(worksheet, arch_name, first_gather_L1_row, last_gather_L1_row, 3*index + 2, 1, (index + 1)*10,
+                        "L1 latency")
+        create_diagrams(worksheet, arch_name, first_gather_LLC_row, last_gather_LLC_row, 3*index + 2, 20,
+                        (index + 1)*10, "LLC latency")
+        create_diagrams(worksheet, arch_name, first_gather_DRAM_row, last_gather_DRAM_row, 3*index + 2, 40,
+                        (index + 1)*10, "DRAM latency")
     workbook.close()
 
