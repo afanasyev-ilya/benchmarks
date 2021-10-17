@@ -2,7 +2,7 @@
 const double eps = 0.001;
 
 template <typename AT>
-void Init(AT* x, AT *y, size_t size)
+void init(AT* x, AT *y, size_t size)
 {
     #pragma omp parallel
     {
@@ -31,7 +31,7 @@ AT euclidean_distance(AT* x, AT *y, size_t size)
 }
 
 template <typename AT>
-AT Kernel(AT* x, AT *y, size_t size)
+AT kernel(AT* x, AT *y, size_t size)
 {
     return euclidean_distance(x, y, size);
 }

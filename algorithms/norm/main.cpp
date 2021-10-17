@@ -5,50 +5,35 @@ typedef double base_type;
 
 void call_kernel(Parser &parser)
 {
-    size_t size = parser.get_size();
-    base_type * y = new base_type[size];
-    base_type * x = new base_type[size];
+    size_t size = parser.get_large_size() / sizeof(base_type);
 
-    #ifdef METRIC_RUN
-    int iterations = LOC_REPEAT * USUAL_METRICS_REPEAT;
-    #else
+    base_type *x, *y;
+    MemoryAPI::allocate_array(&x, size);
+    MemoryAPI::allocate_array(&y, size);
+
     int iterations = LOC_REPEAT;
-    #endif
 
-    Init(x, y, size);
+    init(x, y, size);
 
-    #ifndef METRIC_RUN
     size_t bytes_requested = size*sizeof(base_type)*2;
     size_t flops_requested = size*3;
     auto counter = PerformanceCounter(bytes_requested, flops_requested);
-    #endif
 
 	for(int i = 0; i < iterations; i++)
 	{
-        #ifndef METRIC_RUN
-        Init(x, y, size);
-		//locality::utils::CacheAnnil(0);
-
         counter.start_timing();
-        #endif
 
-        Kernel(x, y, size);
+        kernel(x, y, size);
 
-        #ifndef METRIC_RUN
         counter.end_timing();
-
         counter.update_counters();
-
         counter.print_local_counters();
-        #endif
 	}
 
-    #ifndef METRIC_RUN
     counter.print_average_counters(true);
-    #endif
 
-    delete[]y;
-    delete[]x;
+    MemoryAPI::free_array(x);
+    MemoryAPI::free_array(y);
 }
 
 int main(int argc, char **argv)

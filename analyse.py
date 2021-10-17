@@ -21,7 +21,7 @@ last_scatter_row = 0
 ordered_benchmarks = ["fma_ker", "gemm_alg",  # compute -> vector -> unit
                       "compute_latency_ker",  # compute -> vector -> latency
                       "fib_ker",  # compute -> scalar -> unit
-                      "lemher_ker", "primes_alg",  # compute -> scalar -> latency
+                      "lehmer_ker", "primes_alg",  # compute -> scalar -> latency
                       "L1_bandwidth_ker",  # memory -> bandwidth -> L1
                       # LLC
                       "dense_vec_ker", "norm_alg",  # memory -> bandwidth -> DRAM

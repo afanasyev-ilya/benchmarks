@@ -3,7 +3,7 @@ import optparse
 import shutil
 import subprocess
 from scripts.roofline import platform_specs
-from scripts.helpers import b2t,parse_timings,get_cores_count,get_arch,make_binaries,t2b,get_cache_size
+from scripts.helpers import *
 #from scripts.plot import plot_gather_or_scatter
 import json
 import sys
@@ -29,6 +29,7 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                            " -opt-mode opt -datatype dbl"],
                "compute_latency_ker": [""],
                "lehmer_ker": [""],
+               "norm_alg": [" -large-size 2GB" ],
                "L1_bandwidth_ker": [" -mode 0",
                                     " -mode 1",
                                     " -mode 2",
@@ -54,12 +55,14 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                "interconnect_latency_ker": [" -large-size 2GB -mode 0",
                                             " -large-size 2GB -mode 1",
                                             " -large-size 2GB -mode 2",
-                                            " -large-size 2GB -mode 3"]}
+                                            " -large-size 2GB -mode 3"],
+               "LLC_bandwidth_ker": [" -large-size 1MB ", " -large-size 3MB ", " -large-size 6MB "]}
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
                          "primes_alg": "scalar", "lehmer_ker": "scalar", "fib_ker": "scalar"}
-generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1", "norm_alg": "DRAM"}
+generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1", "norm_alg": "DRAM",
+                        "LLC_bandwidth_ker": "LLC"}
 
 
 def run_benchmarks(benchmarks_list, options):
@@ -74,6 +77,8 @@ def run_benchmarks(benchmarks_list, options):
             fma_benchmark(benchmark_name, exec_params[benchmark_name], options, testing_results)
         elif "interconnect" in benchmark_name:
             benchmark_interconnect(benchmark_name, exec_params[benchmark_name], options, testing_results)
+        elif benchmark_name == "LLC_bandwidth_ker":
+            benchmark_LLC_bandwidth(benchmark_name, exec_params[benchmark_name], options, testing_results)
         elif benchmark_name in generic_compute_bound.keys():
             generic_compute_bound_benchmark(benchmark_name, exec_params[benchmark_name], options,
                                             generic_compute_bound[benchmark_name], testing_results)
@@ -229,7 +234,6 @@ def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max
 
 
 def benchmark_gather(benchmark_name, benchmark_parameters, options, testing_results):
-    testing_results[benchmark_name] = {}
     l1_size = get_cache_size("L1")
     l2_size = get_cache_size("L2")
     l3_size = get_cache_size("L3")
@@ -258,6 +262,29 @@ def benchmark_scatter(benchmark_name, benchmark_parameters, options, testing_res
     testing_results[benchmark_name] = {}
     for cur_size, cur_band in zip(sizes, bandwidths):
         testing_results[benchmark_name][cur_size] = cur_band
+
+
+def benchmark_LLC_bandwidth(benchmark_name, benchmark_parameters, options, testing_results):
+    prev_LLC_size = get_cache_size(get_prev_LLC_name(options.arch))
+    LLC_size = get_cache_size(get_LLC_name(options.arch))
+    num_arrays = 3
+    one_array_size = (prev_LLC_size*2) / num_arrays
+
+    max_bw = 0
+    max_pos = 0
+
+    while one_array_size * num_arrays < LLC_size:
+        formatted_small_size = b2t(one_array_size)
+        cmd = "./bin/" + benchmark_name + " -large-size " + formatted_small_size
+        string_output = run_and_wait(cmd, options)
+        timings = parse_timings(string_output)
+
+        if timings["avg_bw"] > max_bw:
+            max_bw = timings["avg_bw"]
+            max_pos = b2t(one_array_size * num_arrays)
+        one_array_size *= 1.5
+
+    testing_results[benchmark_name] = {"max_bandwidth": max_bw, "max_size": max_pos}
 
 
 if __name__ == "__main__":

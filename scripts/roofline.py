@@ -17,19 +17,19 @@ kunpeng_characteristics = {"bandwidths": {"DRAM": 187, "L3": 1060, "L2": 1800, "
                                                  "float_vector_FMA": 1996}}  # GFLOP/s
 
 platform_specs = {
-    "intel_xeon_6140": {"bandwidths": {"DRAM": 127, "L3": 573, "L2": 1800, "L1": 18000},
+    "intel_xeon_6140": {"bandwidths": {"DRAM": 127, "LLC": 573, "L2": 1800, "L1": 18000},
                         "peak_performances": {"scalar": 82,
                                               "double": 1320,
                                               "float": 2649}},
-    "kunpeng_920_64_core": {"bandwidths": {"DRAM": 187, "L3": 1397, "L2": 4163, "L1": 7500},
+    "kunpeng_920_64_core": {"bandwidths": {"DRAM": 187, "LLC": 1397, "L2": 4163, "L1": 7500},
                             "peak_performances": {"scalar": 332,
                                                   "double": 660,
                                                   "float": 1331}},
-    "a64fx": {"bandwidths": {"DRAM": 1000, "L3": 1, "L2": 1, "L1": 1},
+    "a64fx": {"bandwidths": {"DRAM": 1000, "LLC": 1, "L1": 1},
                              "peak_performances": {"scalar": 1,
                                                    "double": 3379,
                                                    "float": 6758}},
-    "unknown": {"bandwidths": {"DRAM": 100, "L3": 200, "L2": 250, "L1": 500},
+    "unknown": {"bandwidths": {"DRAM": 100, "LLC": 200, "L2": 250, "L1": 500},
                 "peak_performances": {"scalar": 10,
                                       "double": 50,
                                       "float": 100}}

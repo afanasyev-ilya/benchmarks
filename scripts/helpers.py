@@ -1,5 +1,6 @@
 import subprocess
 import re
+from .roofline import platform_specs
 
 
 def b2t(num, suffix="B"):
@@ -19,6 +20,30 @@ def t2b(value):
         multiplier = {"B": 1, "KB": 1024, "MB": 1024*1024, "GB": 1024*1024*1024}
         return num * multiplier[suffix]
     return 1
+
+
+def get_LLC_name(arch_name):
+    roof_name = "LLC"
+    output = subprocess.check_output(["lscpu"]).decode()
+    if "L4" in output:
+        roof_name = "L4"
+    elif "L3" in output:
+        roof_name = "L3"
+    elif "L2" in output:
+        roof_name = "L2"
+    return roof_name
+
+
+def get_prev_LLC_name(arch_name):
+    roof_name = "LLC"
+    output = subprocess.check_output(["lscpu"]).decode()
+    if "L4" in output:
+        roof_name = "L3"
+    elif "L3" in output:
+        roof_name = "L2"
+    elif "L2" in output:
+        roof_name = "L1"
+    return roof_name
 
 
 def get_cache_size(cache_name):
