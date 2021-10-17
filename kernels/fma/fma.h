@@ -1,12 +1,9 @@
-#include <string>
-
 #ifdef __USE_INTEL__
 #include <immintrin.h>
 #elif __USE_KUNPENG_920__
 #include <arm_neon.h>
 #endif
 
-using std::string;
 
 template<typename DT>
 void init(DT *in_data, DT *out_data, size_t size)

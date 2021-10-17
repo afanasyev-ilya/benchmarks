@@ -57,13 +57,14 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                                             " -large-size 2GB -mode 2",
                                             " -large-size 2GB -mode 3"],
                "LLC_bandwidth_ker": [" -large-size 1MB ", " -large-size 3MB ", " -large-size 6MB "],
-               "prefix_sum_alg": [" -large-size 23MB "]}
+               "prefix_sum_alg": [" -large-size 23MB "],
+               "stencil_1D_alg": [" -size 100000000 -r 7 -mode 0 ", " -size 100000000 -r 7 -mode 1 "]}
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
                          "primes_alg": "scalar", "lehmer_ker": "scalar", "fib_ker": "scalar"}
 generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1", "norm_alg": "DRAM",
-                        "LLC_bandwidth_ker": "LLC", "prefix_sum_alg": "LLC"}
+                        "LLC_bandwidth_ker": "LLC", "prefix_sum_alg": "LLC", "stencil_1D_alg": "L1"}
 
 
 def run_benchmarks(benchmarks_list, options):
@@ -285,7 +286,9 @@ def benchmark_LLC_bandwidth(benchmark_name, benchmark_parameters, options, testi
             max_pos = b2t(one_array_size * num_arrays)
         one_array_size *= 1.5
 
-    testing_results[benchmark_name] = {"max_bandwidth": max_bw, "max_size": max_pos}
+    testing_results[benchmark_name] = {"max_bandwidth": max_bw,
+                                       "max_size": max_pos,
+                                       "efficiency": 100.0*max_bw/platform_specs[options.arch]["bandwidths"]["LLC"]}
 
 
 if __name__ == "__main__":

@@ -1,4 +1,15 @@
 #include "common/lib.h"
+
+#ifdef __USE_INTEL__
+#define __USE_AVX_512__
+#define SIMD_SIZE 16
+#endif
+
+#ifdef __USE_KUNPENG_920__
+#define __USE_ARM_NEON__
+#define SIMD_SIZE 4
+#endif
+
 #include "stencil_1D.h"
 
 typedef float base_type;
