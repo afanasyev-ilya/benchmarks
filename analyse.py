@@ -45,20 +45,48 @@ ordered_benchmarks = ["fma_ker", "gemm_alg",  # compute -> vector -> unit
 ]
 
 
-def add_generic_compute_header(worksheet, row, test_name, test_category, test_info):
+def add_generic_compute_header(worksheet, row, test_name, test_category, modes_info):
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
-    worksheet.merge_range(row, 0, row + 1, 0, test_name, cell_format)
-    worksheet.merge_range(row, 1, row + 1, 1, test_category, cell_format)
-    worksheet.merge_range(row, 2, row + 1, 2, test_info, cell_format)
+    worksheet.merge_range(row, 0, row + 2*len(modes_info) - 1, 0, test_name, cell_format)
+    worksheet.merge_range(row, 1, row + 2*len(modes_info) - 1, 1, test_category, cell_format)
 
-    worksheet.write(row + 0, 3, "performance:", cell_format)
-    worksheet.write(row + 1, 3, "efficiency:", cell_format)
+    i = 0
+    for test_info in modes_info:
+        worksheet.merge_range(row + i, 2, row + i + 1, 2, test_info, cell_format)
+        worksheet.write(row + i + 0, 3, "performance:", cell_format)
+        worksheet.write(row + i + 1, 3, "efficiency:", cell_format)
+        i += 2
 
 
-def add_generic_compute_content(worksheet, row, col, data):
+def add_generic_memory_header(worksheet, row, test_name, test_category, modes_info):
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
-    worksheet.write(row + 0, col, str("{:.1f}".format(data["performance"])) + " GFLOP/s (GIOP/s)", cell_format)
-    worksheet.write(row + 1, col, str("{:.1f}".format(data["efficiency"])) + "%", cell_format)
+    worksheet.merge_range(row, 0, row + 2*len(modes_info) - 1, 0, test_name, cell_format)
+    worksheet.merge_range(row, 1, row + 2*len(modes_info) - 1, 1, test_category, cell_format)
+
+    i = 0
+    for test_info in modes_info:
+        worksheet.merge_range(row + i, 2, row + i + 1, 2, test_info, cell_format)
+        worksheet.write(row + i + 0, 3, "bandwidth:", cell_format)
+        worksheet.write(row + i + 1, 3, "efficiency:", cell_format)
+        i += 2
+
+
+def add_generic_compute_content(worksheet, row, col, modes_data):
+    i = 0
+    for data in modes_data:
+        cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+        worksheet.write(row + i + 0, col, str("{:.1f}".format(data["performance"])) + " GFLOP/s (GIOP/s)", cell_format)
+        worksheet.write(row + i + 1, col, str("{:.1f}".format(data["efficiency"])) + "%", cell_format)
+        i += 2
+
+
+def add_generic_memory_content(worksheet, row, col, modes_data):
+    i = 0
+    for data in modes_data:
+        cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+        worksheet.write(row + i + 0, col, str("{:.1f}".format(data["bandwidth"])) + " GFLOP/s (GIOP/s)", cell_format)
+        worksheet.write(row + i + 1, col, str("{:.1f}".format(data["efficiency"])) + "%", cell_format)
+        i += 2
 
 
 def fma_ker(worksheet, row, col, name, data, arch_name):
@@ -66,101 +94,98 @@ def fma_ker(worksheet, row, col, name, data, arch_name):
 
     worksheet.merge_range(row, 0, row + 3, 0,  "FMA kernel", cell_format)
     worksheet.merge_range(row, 1, row + 3, 1, "cpu-bound -> vector-bound -> unit-bound", cell_format)
+    worksheet.merge_range(row, 2, row + 3, 2, "Performs a sequence of FMA operations.", cell_format)
 
-    worksheet.write(row, 2, "float perf:", cell_format)
+    worksheet.write(row, 3, "float perf:", cell_format)
     worksheet.write(row, col, str("{:.1f}".format(data["flt_perf"])) + " GFLOP/s", cell_format)
 
-    worksheet.write(row + 1, 2, "float efficiency:", cell_format)
+    worksheet.write(row + 1, 3, "float efficiency:", cell_format)
     worksheet.write(row + 1, col, str("{:.1f}".format(data["flt_efficiency"])) + "%", cell_format)
 
-    worksheet.write(row + 2, 2, "double perf:", cell_format)
+    worksheet.write(row + 2, 3, "double perf:", cell_format)
     worksheet.write(row + 2, col, str("{:.1f}".format(data["dbl_perf"])) + " GFLOP/s", cell_format)
 
-    worksheet.write(row + 3, 2, "double efficiency:", cell_format)
+    worksheet.write(row + 3, 3, "double efficiency:", cell_format)
     worksheet.write(row + 3, col, str("{:.1f}".format(data["dbl_efficiency"])) + "%", cell_format)
 
     return row + 4
 
 
 def gemm_alg(worksheet, row, col, name, data, arch_name):
-    description = "Performs dense matrix-matrix multiplication in single preciesion. "
+    description = ["Performs dense matrix-matrix multiplication in single preciesion."]
     add_generic_compute_header(worksheet, row, "GEMM algorithm", "cpu-bound -> vector-bound -> unit-bound", description)
-    add_generic_compute_content(worksheet, row, col, list(data.values())[0])
+    add_generic_compute_content(worksheet, row, col, list(data.values()))
     return row + 2
 
 
 def fib_ker(worksheet, row, col, name, data, arch_name):
-    description = "Each core calculates it's onw Fibonachi sequence."
+    description = ["Each core calculates it's onw Fibonachi sequence."]
     add_generic_compute_header(worksheet, row, "fibonachi kernel", "cpu-bound -> scalar-bound -> unit-bound", description)
-    add_generic_compute_content(worksheet, row, col, list(data.values())[0])
+    add_generic_compute_content(worksheet, row, col, list(data.values()))
     return row + 2
 
 
 def compute_latency_ker(worksheet, row, col, name, data, arch_name):
-    description = "Performs a sequence of sqrt and fma operations."
+    description = ["Performs a sequence of sqrt and fma operations."]
     add_generic_compute_header(worksheet, row, "compute latency kernel", "cpu-bound -> vector-bound -> latency-bound", description)
-    add_generic_compute_content(worksheet, row, col, list(data.values())[0])
+    add_generic_compute_content(worksheet, row, col, list(data.values()))
     return row + 2
 
 
 def primes_alg(worksheet, row, col, name, data, arch_name):
-    description = "Detects first N prime numbers. Unlike lemher kernel is also affected by workload imbalance issues."
+    description = ["Detects first N prime numbers. Unlike lemher kernel is also affected by workload imbalance issues."]
     add_generic_compute_header(worksheet, row, "prime numbers detection algorithms", "cpu-bound -> scalar-bound -> latency-bound", description)
-    add_generic_compute_content(worksheet, row, col, list(data.values())[0])
+    add_generic_compute_content(worksheet, row, col, list(data.values()))
     return row + 2
 
 
 def lehmer_ker(worksheet, row, col, name, data, arch_name):
-    description = "X_k+1= a* X_k mod m, used for random numbers generation, for example in rand() gcc implementation."
+    description = ["X_k+1= a* X_k mod m, used for random numbers generation, for example in rand() gcc implementation."]
     add_generic_compute_header(worksheet, row, "lehmer kernel", "cpu-bound -> scalar-bound -> latency-bound", description)
-    add_generic_compute_content(worksheet, row, col, list(data.values())[0])
+    add_generic_compute_content(worksheet, row, col, list(data.values()))
     return row + 2
 
 
 def L1_bandwidth_ker(worksheet, row, col, name, data, arch_name):
-    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+    descriptions = ["reads-only, instruction level parallelism available",
+                   "reads and writes, instruction level parallelism available",
+                   "reads-only, no instruction level parallelism available",
+                   "reads-only, array is accessed with random offsets"]
+    add_generic_memory_header(worksheet, row, "L1 bandwidth kernel", "memory-bound -> bandwidth-bound -> L1-bound", descriptions)
+    add_generic_memory_content(worksheet, row, col, list(data.values()))
 
-    worksheet.merge_range(row, 0, row + 4, 0, "L1 bandwidth kernel\n"
-                                              "uses vector instructions to load/store information inside arrays of 16 KB size.\n"
-                                              "has multiple modes with instruction level parallelism enabled/disabled.", cell_format)
-    worksheet.merge_range(row, 1, row + 4, 1, "memory-bound -> bandwidth-bound -> L1-bound", cell_format)
-
-    num_rows = 0
-    mode_comments = ["reads-only, instruction level parallelism available",
-                     "reads and writes, instruction level parallelism available",
-                     "reads-only, no instruction level parallelism available",
-                     "reads-only, array is accessed with random offsets"]
-    for exec_param in list(data.values()):
-        worksheet.write(row + num_rows, 3, "mode: " + mode_comments[num_rows], cell_format)
-        bw_stats = str("Bandwidth:\n " + str("{:.1f}".format(exec_param["bandwidth"])) + " GB/s, " +
-                        str("{:.1f}".format(exec_param["efficiency"])) + "%\n (of theoretical L1 bandwidth " +
-                        str(platform_specs[arch_name]["bandwidths"]["L1"]) + ")")
-        worksheet.write(row + num_rows, col, str(bw_stats), cell_format)
-        num_rows += 1
-    return row + num_rows
+    return row + 2*len(descriptions)
 
 
 def dense_vec_ker(worksheet, row, col, name, data, arch_name):
-    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+    descriptions = ["2 vectors, copy",
+                    "2 vectors, scale",
+                    "3 vectors, add",
+                    "3 vectors, triada"
+                    "4 vectors, add",
+                    "5 vectors, add"]
 
-    worksheet.merge_range(row, 0, row + 5, 0, "dense vectors kernel (DAXPY)", cell_format)
-    worksheet.merge_range(row, 1, row + 5, 1, "memory-bound -> bandwidth-bound -> DRAM-bound", cell_format)
-    num_runs = 0
+    add_generic_memory_header(worksheet, row, "dense vectors kernel", "memory-bound -> bandwidth-bound -> DRAM-bound",
+                              descriptions)
+    add_generic_memory_content(worksheet, row, col, list(data.values()))
 
-    num_vectors = ["2", "2", "3", "3", "4", "5"]
-    for exec_param in list(data.values()):
-        worksheet.write(row + num_runs, 3, "num vectors: " + num_vectors[num_runs], cell_format)
-        worksheet.write(row + num_runs, col, str("{:.1f}".format(exec_param["bandwidth"])) + " GB/s, " +
-                        str("{:.1f}".format(exec_param["efficiency"])) + "%", cell_format)
-        num_runs += 1
-    return row + num_runs
+    return row + 2*len(descriptions)
+
+
+def norm_alg(worksheet, row, col, name, data, arch_name):
+    description = ["Computing euclidean norm between 2 large vectors (4GB)."]
+
+    add_generic_memory_header(worksheet, row, "computing norm algorithm", "memory-bound -> bandwidth-bound -> DRAM-bound",
+                              description)
+    add_generic_memory_content(worksheet, row, col, list(data.values()))
+
+    return row + 2*len(description)
 
 
 def interconnect_band_ker(worksheet, row, col, name, data, arch_name):
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
 
-    worksheet.merge_range(row, 0, row + 4, 0, "interconnect kernel \n, "
-                                              "performs either local or remote sequential memory accesses", cell_format)
+    worksheet.merge_range(row, 0, row + 4, 0, "interconnect kernel", cell_format)
     worksheet.merge_range(row, 1, row + 4, 1, "memory-bound -> bandwidth-bound -> interconnect-bound", cell_format)
     num_runs = 0
 
@@ -169,8 +194,9 @@ def interconnect_band_ker(worksheet, row, col, name, data, arch_name):
                          "both sockets access local data",
                          "both sockets access remote data"]
     for bandwidth in list(data.values()):
-        worksheet.write(row + num_runs, 3, "mode: " + mode_descriptions[num_runs], cell_format)
-        bw_stats = "bandwidth: " + str("{:.1f}".format(bandwidth)) + " GB/s"
+        worksheet.write(row + num_runs, 2, "mode: " + mode_descriptions[num_runs], cell_format)
+        bw_stats = str("{:.1f}".format(bandwidth)) + " GB/s"
+        worksheet.write(row + num_runs, 3, "bandwidth", cell_format)
         worksheet.write(row + num_runs, col, str(bw_stats), cell_format)
         num_runs += 1
     return row + num_runs
@@ -181,15 +207,16 @@ def gather_ker_L1_latency(worksheet, row, col, name, data, arch_name):
     global last_gather_L1_row
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
 
-    worksheet.merge_range(row, 0, row + 1, 0, "gather kernel L1 latency", cell_format)
-    worksheet.merge_range(row, 1, row + 1, 1, "memory -> bandwidth -> L1 latency", cell_format)
+    worksheet.merge_range(row, 0, row + 3, 0, "gather kernel L1 latency", cell_format)
+    worksheet.merge_range(row, 1, row + 3, 1, "memory -> bandwidth -> L1 latency", cell_format)
+    worksheet.merge_range(row, 2, row + 3, 2, "Indirectly accessed array is in [1KB, L1 size] range", cell_format)
 
     gather_common(row, col, worksheet, cell_format, data, 0)
 
     first_gather_L1_row = row
     last_gather_L1_row = row + len(data) - 1
 
-    return row + 2
+    return row + 4
 
 
 def gather_ker_LLC_latency(worksheet, row, col, name, data, arch_name):
@@ -197,15 +224,16 @@ def gather_ker_LLC_latency(worksheet, row, col, name, data, arch_name):
     global last_gather_LLC_row
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
 
-    worksheet.merge_range(row, 0, row + 1, 0, "gather kernel LLC latency", cell_format)
-    worksheet.merge_range(row, 1, row + 1, 1, "memory -> bandwidth -> LLC latency", cell_format)
+    worksheet.merge_range(row, 0, row + 3, 0, "gather kernel LLC latency", cell_format)
+    worksheet.merge_range(row, 1, row + 3, 1, "memory -> bandwidth -> LLC latency", cell_format)
+    worksheet.merge_range(row, 2, row + 3, 2, "Indirectly accessed array is in [L1/L2 size, LLC size] range", cell_format)
 
     gather_common(row, col, worksheet, cell_format, data, 1)
 
     first_gather_LLC_row = row
     last_gather_LLC_row = row + len(data) - 1
 
-    return row + 2
+    return row + 4
 
 
 def gather_ker_DRAM_latency(worksheet, row, col, name, data, arch_name):
@@ -213,15 +241,16 @@ def gather_ker_DRAM_latency(worksheet, row, col, name, data, arch_name):
     global last_gather_DRAM_row
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
 
-    worksheet.merge_range(row, 0, row + 1, 0, "gather kernel DRAM latency", cell_format)
-    worksheet.merge_range(row, 1, row + 1, 1, "memory -> bandwidth -> DRAM latency", cell_format)
+    worksheet.merge_range(row, 0, row + 3, 0, "gather kernel DRAM latency", cell_format)
+    worksheet.merge_range(row, 1, row + 3, 1, "memory -> bandwidth -> DRAM latency", cell_format)
+    worksheet.merge_range(row, 2, row + 3, 2, "Indirectly accessed array is in [LLC size, 2GB] range", cell_format)
 
     gather_common(row, col, worksheet, cell_format, data, 2)
 
     first_gather_DRAM_row = row
     last_gather_DRAM_row = row + len(data) - 1
 
-    return row + 2
+    return row + 4
 
 
 def gather_common(row, col, worksheet, cell_format, data, col_shift):
@@ -237,11 +266,15 @@ def gather_common(row, col, worksheet, cell_format, data, col_shift):
             min_bw = cur_band
             min_pos = cur_size
 
-    min_info = "min bandwidth: " + str(min_bw) + " GB/s " + " at " + str(min_pos)
-    max_info = "max bandwidth: " + str(max_bw) + " GB/s " + " at " + str(max_pos)
+    worksheet.write(row + 0, 3, "min bandwidth", cell_format)
+    worksheet.write(row + 1, 3, "size at which min bandwidth achieved", cell_format)
+    worksheet.write(row + 2, 3, "max bandwidth", cell_format)
+    worksheet.write(row + 3, 3, "size at which max bandwidth achieved", cell_format)
 
-    worksheet.write(row + 0, col, min_info, cell_format)
-    worksheet.write(row + 1, col, max_info, cell_format)
+    worksheet.write(row + 0, col, str(min_bw) + " GB/s ", cell_format)
+    worksheet.write(row + 1, col, str(min_pos), cell_format)
+    worksheet.write(row + 2, col, str(max_bw) + " GB/s ", cell_format)
+    worksheet.write(row + 3, col, str(max_pos), cell_format)
 
     shift = 0
     for size, bw in data.items():
@@ -275,30 +308,35 @@ def LLC_bandwidth_ker(worksheet, row, col, name, data, arch_name):
 
     worksheet.merge_range(row, 0, row + 3, 0, "LLC bandwidth", cell_format)
     worksheet.merge_range(row, 1, row + 3, 1, "memory-bound -> bandwidth-bound -> LLC-bound", cell_format)
+    worksheet.merge_range(row, 2, row + 3, 2, "multiple operations over ", cell_format)
 
-    worksheet.write(row, col, "max bandwidth", cell_format)
-    worksheet.write(row, col + 1, str("{:.1f}".format(data["max_bandwidth"])) + " GB/s", cell_format)
-    worksheet.write(row + 1, col, "max efficiency", cell_format)
-    worksheet.write(row + 1, col + 1, str("{:.1f}".format(data["efficiency"])) + "%", cell_format)
-    worksheet.write(row + 2, col, "at size", cell_format)
-    worksheet.write(row + 2, col + 1, str(data["max_size"]), cell_format)
+    worksheet.write(row, 3, "max bandwidth", cell_format)
+    worksheet.write(row, col, str("{:.1f}".format(data["max_bandwidth"])) + " GB/s", cell_format)
+    worksheet.write(row + 1, 3, "max efficiency", cell_format)
+    worksheet.write(row + 1, col, str("{:.1f}".format(data["efficiency"])) + "%", cell_format)
+    worksheet.write(row + 2, 3, "at size", cell_format)
+    worksheet.write(row + 2, col, str(data["max_size"]), cell_format)
 
     return row + 3
 
 
 def prefix_sum_alg(worksheet, row, col, name, data, arch_name):
-    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
-    data = list(data.values())[0]
+    descriptions = ["Inclusive inplace parallel prefix sum algorithm."]
+    add_generic_memory_header(worksheet, row, "prefix sum algorithm",
+                              "memory-bound -> bandwidth-bound -> LLC-bound", descriptions)
+    add_generic_memory_content(worksheet, row, col, list(data.values()))
 
-    worksheet.merge_range(row, 0, row + 2, 0, "prefix sum", cell_format)
-    worksheet.merge_range(row, 1, row + 2, 1, "memory-bound -> bandwidth-bound -> LLC-bound", cell_format)
+    return row + 2*len(descriptions)
 
-    worksheet.write(row, col, "bandwidth", cell_format)
-    worksheet.write(row, col + 1, str("{:.1f}".format(data["bandwidth"])) + " GB/s", cell_format)
-    worksheet.write(row + 1, col, "efficiency", cell_format)
-    worksheet.write(row + 1, col + 1, str("{:.1f}".format(data["efficiency"])) + "%", cell_format)
 
-    return row + 2
+def naive_transpose_alg(worksheet, row, col, name, data, arch_name):
+    descriptions = ["Simple matrix transpose algorithm. Sequential stores, strided loads.",
+                    "Simple matrix transpose algorithm. Strided stores, sequential loads."]
+    add_generic_memory_header(worksheet, row, "naive matrix transpose algorithm",
+                              "memory-bound -> latency-bound -> DRAM-bound", descriptions)
+    add_generic_memory_content(worksheet, row, col, list(data.values()))
+
+    return row + 2*len(descriptions)
 
 
 def create_diagrams(worksheet, arch_name, first_row, last_row, col, diag_row, diag_col, name, col_shift):

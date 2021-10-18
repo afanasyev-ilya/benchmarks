@@ -55,9 +55,8 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                "prefix_sum_alg": [" -large-size 23MB "],
                "stencil_1D_alg": [" -size 100000000 -r 7 -mode 0 ",
                                   " -size 100000000 -r 7 -mode 1 "],
-               "naive_transpose_alg": [" -size 20000 -mode 0 ", " -size 20000 -mode 1",
-                                       " -size 25000 -mode 0 ", " -size 25000 -mode 1",
-                                       " -size 30000 -mode 0 ", " -size 30000 -mode 1"]}
+               "naive_transpose_alg": [" -size 25000 -mode 0 ",
+                                       " -size 25000 -mode 1"]}
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
