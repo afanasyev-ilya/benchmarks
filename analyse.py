@@ -45,89 +45,76 @@ ordered_benchmarks = ["fma_ker", "gemm_alg",  # compute -> vector -> unit
 ]
 
 
+def add_generic_compute_header(worksheet, row, test_name, test_category, test_info):
+    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+    worksheet.merge_range(row, 0, row + 1, 0, test_name, cell_format)
+    worksheet.merge_range(row, 1, row + 1, 1, test_category, cell_format)
+    worksheet.merge_range(row, 2, row + 1, 2, test_info, cell_format)
+
+    worksheet.write(row + 0, 3, "performance:", cell_format)
+    worksheet.write(row + 1, 3, "efficiency:", cell_format)
+
+
+def add_generic_compute_content(worksheet, row, col, data):
+    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+    worksheet.write(row + 0, col, str("{:.1f}".format(data["performance"])) + " GFLOP/s (GIOP/s)", cell_format)
+    worksheet.write(row + 1, col, str("{:.1f}".format(data["efficiency"])) + "%", cell_format)
+
+
 def fma_ker(worksheet, row, col, name, data, arch_name):
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
-    worksheet.write(row, 0, "FMA kernel", cell_format)
-    worksheet.write(row, 1, "cpu-bound -> vector-bound -> unit-bound", cell_format)
 
-    flt_stats = str("SUSTAINED PERFORMANCE on FLOATS:\n " + str("{:.1f}".format(data["flt_perf"])) + " GFLOP/s, " +
-          str("{:.1f}".format(data["flt_efficiency"])) + "% of peak")
-    worksheet.write(row, col, str(flt_stats), cell_format)
-    dbl_stats = str("SUSTAINED PERFORMANCE on DOUBLEs:\n " + str("{:.1f}".format(data["dbl_perf"])) + " GFLOP/s, " +
-          str("{:.1f}".format(data["dbl_efficiency"])) + "% of peak")
-    worksheet.write(row + 1, col, str(dbl_stats), cell_format)
-    return row + 2
+    worksheet.merge_range(row, 0, row + 3, 0,  "FMA kernel", cell_format)
+    worksheet.merge_range(row, 1, row + 3, 1, "cpu-bound -> vector-bound -> unit-bound", cell_format)
+
+    worksheet.write(row, 2, "float perf:", cell_format)
+    worksheet.write(row, col, str("{:.1f}".format(data["flt_perf"])) + " GFLOP/s", cell_format)
+
+    worksheet.write(row + 1, 2, "float efficiency:", cell_format)
+    worksheet.write(row + 1, col, str("{:.1f}".format(data["flt_efficiency"])) + "%", cell_format)
+
+    worksheet.write(row + 2, 2, "double perf:", cell_format)
+    worksheet.write(row + 2, col, str("{:.1f}".format(data["dbl_perf"])) + " GFLOP/s", cell_format)
+
+    worksheet.write(row + 3, 2, "double efficiency:", cell_format)
+    worksheet.write(row + 3, col, str("{:.1f}".format(data["dbl_efficiency"])) + "%", cell_format)
+
+    return row + 4
 
 
 def gemm_alg(worksheet, row, col, name, data, arch_name):
-    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
-    data = list(data.values())[0]
-
-    worksheet.write(row, 0, "GEMM algorithm", cell_format)
-    worksheet.write(row, 1, "cpu-bound -> vector-bound -> unit-bound", cell_format)
-
-    flt_stats = str("SUSTAINED PERFORMANCE on FLOATS:\n " + str("{:.1f}".format(data["performance"])) + " GFLOP/s, " +
-                    str("{:.1f}".format(data["efficiency"])) + "%\n (of float theoretical peak " +
-                    str(platform_specs[arch_name]["peak_performances"]["float"]) + ")")
-    worksheet.write(row, col, str(flt_stats), cell_format)
-    return row + 1
-
-
-def compute_latency_ker(worksheet, row, col, name, data, arch_name):
-    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
-    data = list(data.values())[0]
-
-    worksheet.write(row, 0, "compute latency kernel\n"
-                            "performs sqrt and fma operations", cell_format)
-    worksheet.write(row, 1, "cpu-bound -> vector-bound -> latency-bound", cell_format)
-
-    flt_stats = str("Performance:\n " + str("{:.1f}".format(data["performance"])) + " GFLOP/s, " +
-                    str("{:.1f}".format(data["efficiency"])) + "% of peak")
-    worksheet.write(row, col, str(flt_stats), cell_format)
-    return row + 1
+    description = "Performs dense matrix-matrix multiplication in single preciesion. "
+    add_generic_compute_header(worksheet, row, "GEMM algorithm", "cpu-bound -> vector-bound -> unit-bound", description)
+    add_generic_compute_content(worksheet, row, col, list(data.values())[0])
+    return row + 2
 
 
 def fib_ker(worksheet, row, col, name, data, arch_name):
-    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
-    data = list(data.values())[0]
+    description = "Each core calculates it's onw Fibonachi sequence."
+    add_generic_compute_header(worksheet, row, "fibonachi kernel", "cpu-bound -> scalar-bound -> unit-bound", description)
+    add_generic_compute_content(worksheet, row, col, list(data.values())[0])
+    return row + 2
 
-    worksheet.write(row, 0, "fibonachi kernel", cell_format)
-    worksheet.write(row, 1, "cpu-bound -> scalar-bound -> unit-bound", cell_format)
 
-    flt_stats = str("Performance:\n " + str("{:.1f}".format(data["performance"])) + " GFLOP/s, " +
-                    str("{:.1f}".format(data["efficiency"])) + "% of peak")
-    worksheet.write(row, col, str(flt_stats), cell_format)
-    return row + 1
+def compute_latency_ker(worksheet, row, col, name, data, arch_name):
+    description = "Performs a sequence of sqrt and fma operations."
+    add_generic_compute_header(worksheet, row, "compute latency kernel", "cpu-bound -> vector-bound -> latency-bound", description)
+    add_generic_compute_content(worksheet, row, col, list(data.values())[0])
+    return row + 2
 
 
 def primes_alg(worksheet, row, col, name, data, arch_name):
-    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
-    data = list(data.values())[0]
-
-    worksheet.write(row, 0, "primes algorithm, which detects first N prime numbers. \n"
-                            "unlike lemher kernel, also has workload balance issues.", cell_format)
-    worksheet.write(row, 1, "cpu-bound -> scalar-bound -> latency-bound", cell_format)
-
-    flt_stats = str("Performance:\n " + str("{:.1f}".format(data["performance"])) + " GFLOP/s, " +
-                    str("{:.1f}".format(data["efficiency"])) + "%\n (of theoretical scalar peak " +
-                    str(platform_specs[arch_name]["peak_performances"]["scalar"]) + ")")
-    worksheet.write(row, col, str(flt_stats), cell_format)
-    return row + 1
+    description = "Detects first N prime numbers. Unlike lemher kernel is also affected by workload imbalance issues."
+    add_generic_compute_header(worksheet, row, "prime numbers detection algorithms", "cpu-bound -> scalar-bound -> latency-bound", description)
+    add_generic_compute_content(worksheet, row, col, list(data.values())[0])
+    return row + 2
 
 
-def lemher_ker(worksheet, row, col, name, data, arch_name):
-    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
-    data = list(data.values())[0]
-
-    worksheet.write(row, 0, "lemher kernel\n"
-                            "used for random numbers generation, for example in rand() gcc implementation.", cell_format)
-    worksheet.write(row, 1, "cpu-bound -> scalar-bound -> latency-bound", cell_format)
-
-    flt_stats = str("Performance:\n " + str("{:.1f}".format(data["performance"])) + " GFLOP/s, " +
-                    str("{:.1f}".format(data["efficiency"])) + "%\n (of theoretical scalar peak " +
-                    str(platform_specs[arch_name]["peak_performances"]["scalar"]) + ")")
-    worksheet.write(row, col, str(flt_stats), cell_format)
-    return row + 1
+def lehmer_ker(worksheet, row, col, name, data, arch_name):
+    description = "X_k+1= a* X_k mod m, used for random numbers generation, for example in rand() gcc implementation."
+    add_generic_compute_header(worksheet, row, "lehmer kernel", "cpu-bound -> scalar-bound -> latency-bound", description)
+    add_generic_compute_content(worksheet, row, col, list(data.values())[0])
+    return row + 2
 
 
 def L1_bandwidth_ker(worksheet, row, col, name, data, arch_name):
@@ -144,11 +131,11 @@ def L1_bandwidth_ker(worksheet, row, col, name, data, arch_name):
                      "reads-only, no instruction level parallelism available",
                      "reads-only, array is accessed with random offsets"]
     for exec_param in list(data.values()):
-        worksheet.write(row + num_rows, col, "mode: " + mode_comments[num_rows], cell_format)
+        worksheet.write(row + num_rows, 3, "mode: " + mode_comments[num_rows], cell_format)
         bw_stats = str("Bandwidth:\n " + str("{:.1f}".format(exec_param["bandwidth"])) + " GB/s, " +
                         str("{:.1f}".format(exec_param["efficiency"])) + "%\n (of theoretical L1 bandwidth " +
                         str(platform_specs[arch_name]["bandwidths"]["L1"]) + ")")
-        worksheet.write(row + num_rows, col + 1, str(bw_stats), cell_format)
+        worksheet.write(row + num_rows, col, str(bw_stats), cell_format)
         num_rows += 1
     return row + num_rows
 
@@ -162,9 +149,9 @@ def dense_vec_ker(worksheet, row, col, name, data, arch_name):
 
     num_vectors = ["2", "2", "3", "3", "4", "5"]
     for exec_param in list(data.values()):
-        worksheet.write(row + num_runs, col, "num vectors: " + num_vectors[num_runs], cell_format)
-        worksheet.write(row + num_runs, col + 1, str("{:.1f}".format(exec_param["bandwidth"])) + " GB/s, " +
-                        str("{:.1f}".format(exec_param["efficiency"])) + "% of peak", cell_format)
+        worksheet.write(row + num_runs, 3, "num vectors: " + num_vectors[num_runs], cell_format)
+        worksheet.write(row + num_runs, col, str("{:.1f}".format(exec_param["bandwidth"])) + " GB/s, " +
+                        str("{:.1f}".format(exec_param["efficiency"])) + "%", cell_format)
         num_runs += 1
     return row + num_runs
 
@@ -182,9 +169,9 @@ def interconnect_band_ker(worksheet, row, col, name, data, arch_name):
                          "both sockets access local data",
                          "both sockets access remote data"]
     for bandwidth in list(data.values()):
-        worksheet.write(row + num_runs, col, "mode: " + mode_descriptions[num_runs], cell_format)
+        worksheet.write(row + num_runs, 3, "mode: " + mode_descriptions[num_runs], cell_format)
         bw_stats = "bandwidth: " + str("{:.1f}".format(bandwidth)) + " GB/s"
-        worksheet.write(row + num_runs, col + 1, str(bw_stats), cell_format)
+        worksheet.write(row + num_runs, col, str(bw_stats), cell_format)
         num_runs += 1
     return row + num_runs
 
@@ -370,7 +357,9 @@ if __name__ == "__main__":
     worksheet = workbook.add_worksheet(SHEET_NAME)
 
     worksheet.set_column(0, 0, 25)
-    worksheet.set_column(1, 1, 25)
+    worksheet.set_column(1, 1, 20)
+    worksheet.set_column(2, 2, 25)
+    worksheet.set_column(3, 3, 15)
 
     for index, file_name in enumerate(list_of_files):
         with open(file_name, 'r') as f:
@@ -378,8 +367,8 @@ if __name__ == "__main__":
         testing_results = json.loads(data)
         arch_name = testing_results["arch_name"]
 
-        worksheet.set_column(3*index + 1, 3*index + 3, 25)
-        add_stats_to_table(testing_results, worksheet, 3*index + 2)
+        worksheet.set_column(index + 4, index + 4, 20)
+        add_stats_to_table(testing_results, worksheet, index + 4)
         create_diagrams(worksheet, arch_name, first_gather_L1_row, last_gather_L1_row, 3*index + 2, 1, (index + 1)*10,
                         "L1 latency", 0)
         create_diagrams(worksheet, arch_name, first_gather_LLC_row, last_gather_LLC_row, 3*index + 2, 20,
