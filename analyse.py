@@ -9,6 +9,7 @@ import json
 import pprint
 import xlsxwriter
 import collections
+import sys
 
 
 SHEET_NAME = "main_stats"
@@ -23,6 +24,8 @@ last_gather_DRAM_row = 0
 first_scatter_row = 0
 last_scatter_row = 0
 
+SHIFT = 100
+
 
 ordered_benchmarks = ["fma_ker", "gemm_alg",  # compute -> vector -> unit
                       "compute_latency_ker",  # compute -> vector -> latency
@@ -30,14 +33,14 @@ ordered_benchmarks = ["fma_ker", "gemm_alg",  # compute -> vector -> unit
                       "fib_ker",  # compute -> scalar -> unit
                       "lehmer_ker", "primes_alg",  # compute -> scalar -> latency
 
-                      "L1_bandwidth_ker",  # memory -> bandwidth -> L1
+                      "L1_bandwidth_ker", "stencil_1D_alg",  # memory -> bandwidth -> L1
                       "LLC_bandwidth_ker", "prefix_sum_alg",  # memory -> bandwidth -> LLC
                       "dense_vec_ker", "norm_alg",  # memory -> bandwidth -> DRAM
                       "interconnect_band_ker",  # memory -> bandwidth -> interconnect
 
                       "gather_ker_L1_latency",  # memory -> bandwidth -> L1
                       "gather_ker_LLC_latency",  # memory -> bandwidth -> LLC
-                      "gather_ker_DRAM_latency",  # memory -> bandwidth -> DRAM
+                      "gather_ker_DRAM_latency", "naive_transpose_alg",  # memory -> bandwidth -> DRAM
                       "interconnect_latency_ker",  # memory -> latency -> interconnect
 ]
 
@@ -159,9 +162,9 @@ def dense_vec_ker(worksheet, row, col, name, data, arch_name):
 
     num_vectors = ["2", "2", "3", "3", "4", "5"]
     for exec_param in list(data.values()):
-        bw_stats = str("num vectors: " + num_vectors[num_runs] + "\n" + str("{:.1f}".format(exec_param["bandwidth"])) + " GB/s, " +
-                    str("{:.1f}".format(exec_param["efficiency"])) + "% of peak")
-        worksheet.write(row + num_runs, col, str(bw_stats), cell_format)
+        worksheet.write(row + num_runs, col, "num vectors: " + num_vectors[num_runs], cell_format)
+        worksheet.write(row + num_runs, col + 1, str("{:.1f}".format(exec_param["bandwidth"])) + " GB/s, " +
+                        str("{:.1f}".format(exec_param["efficiency"])) + "% of peak", cell_format)
         num_runs += 1
     return row + num_runs
 
@@ -191,19 +194,15 @@ def gather_ker_L1_latency(worksheet, row, col, name, data, arch_name):
     global last_gather_L1_row
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
 
-    worksheet.merge_range(row, 0, row + len(data) - 1, 0, "gather kernel L1 latency", cell_format)
-    worksheet.merge_range(row, 1, row + len(data) - 1, 1, "memory -> bandwidth -> L1 latency", cell_format)
+    worksheet.merge_range(row, 0, row + 1, 0, "gather kernel L1 latency", cell_format)
+    worksheet.merge_range(row, 1, row + 1, 1, "memory -> bandwidth -> L1 latency", cell_format)
 
-    shift = 0
-    for size, bw in data.items():
-        worksheet.write(row + shift, col, str(size), cell_format)
-        worksheet.write(row + shift, col + 1, int(bw), cell_format)
-        shift += 1
+    gather_common(row, col, worksheet, cell_format, data, 0)
 
     first_gather_L1_row = row
     last_gather_L1_row = row + len(data) - 1
 
-    return row + len(data)
+    return row + 2
 
 
 def gather_ker_LLC_latency(worksheet, row, col, name, data, arch_name):
@@ -211,19 +210,15 @@ def gather_ker_LLC_latency(worksheet, row, col, name, data, arch_name):
     global last_gather_LLC_row
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
 
-    worksheet.merge_range(row, 0, row + len(data) - 1, 0, "gather kernel LLC latency", cell_format)
-    worksheet.merge_range(row, 1, row + len(data) - 1, 1, "memory -> bandwidth -> LLC latency", cell_format)
+    worksheet.merge_range(row, 0, row + 1, 0, "gather kernel LLC latency", cell_format)
+    worksheet.merge_range(row, 1, row + 1, 1, "memory -> bandwidth -> LLC latency", cell_format)
 
-    shift = 0
-    for size, bw in data.items():
-        worksheet.write(row + shift, col, str(size), cell_format)
-        worksheet.write(row + shift, col + 1, int(bw), cell_format)
-        shift += 1
+    gather_common(row, col, worksheet, cell_format, data, 1)
 
     first_gather_LLC_row = row
     last_gather_LLC_row = row + len(data) - 1
 
-    return row + len(data)
+    return row + 2
 
 
 def gather_ker_DRAM_latency(worksheet, row, col, name, data, arch_name):
@@ -231,19 +226,41 @@ def gather_ker_DRAM_latency(worksheet, row, col, name, data, arch_name):
     global last_gather_DRAM_row
     cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
 
-    worksheet.merge_range(row, 0, row + len(data) - 1, 0, "gather kernel DRAM latency", cell_format)
-    worksheet.merge_range(row, 1, row + len(data) - 1, 1, "memory -> bandwidth -> DRAM latency", cell_format)
+    worksheet.merge_range(row, 0, row + 1, 0, "gather kernel DRAM latency", cell_format)
+    worksheet.merge_range(row, 1, row + 1, 1, "memory -> bandwidth -> DRAM latency", cell_format)
 
-    shift = 0
-    for size, bw in data.items():
-        worksheet.write(row + shift, col, str(size), cell_format)
-        worksheet.write(row + shift, col + 1, int(bw), cell_format)
-        shift += 1
+    gather_common(row, col, worksheet, cell_format, data, 2)
 
     first_gather_DRAM_row = row
     last_gather_DRAM_row = row + len(data) - 1
 
-    return row + len(data)
+    return row + 2
+
+
+def gather_common(row, col, worksheet, cell_format, data, col_shift):
+    max_bw = 0
+    max_pos = 0
+    min_bw = sys.float_info.max
+    min_pos = 0
+    for cur_size, cur_band in data.items():
+        if cur_band > max_bw:
+            max_bw = cur_band
+            max_pos = cur_size
+        if cur_band < min_bw:
+            min_bw = cur_band
+            min_pos = cur_size
+
+    min_info = "min bandwidth: " + str(min_bw) + " GB/s " + " at " + str(min_pos)
+    max_info = "max bandwidth: " + str(max_bw) + " GB/s " + " at " + str(max_pos)
+
+    worksheet.write(row + 0, col, min_info, cell_format)
+    worksheet.write(row + 1, col, max_info, cell_format)
+
+    shift = 0
+    for size, bw in data.items():
+        worksheet.write(row + shift, SHIFT + col + 2*col_shift, str(size), cell_format)
+        worksheet.write(row + shift, SHIFT + col + 2*col_shift+1, int(bw), cell_format)
+        shift += 1
 
 
 def scatter_ker(worksheet, row, col, name, data, arch_name):
@@ -266,18 +283,50 @@ def scatter_ker(worksheet, row, col, name, data, arch_name):
     return row + len(data)
 
 
-def create_diagrams(worksheet, arch_name, first_row, last_row, col, diag_row, diag_col, name):
+def LLC_bandwidth_ker(worksheet, row, col, name, data, arch_name):
+    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+
+    worksheet.merge_range(row, 0, row + 3, 0, "LLC bandwidth", cell_format)
+    worksheet.merge_range(row, 1, row + 3, 1, "memory-bound -> bandwidth-bound -> LLC-bound", cell_format)
+
+    worksheet.write(row, col, "max bandwidth", cell_format)
+    worksheet.write(row, col + 1, str("{:.1f}".format(data["max_bandwidth"])) + " GB/s", cell_format)
+    worksheet.write(row + 1, col, "max efficiency", cell_format)
+    worksheet.write(row + 1, col + 1, str("{:.1f}".format(data["efficiency"])) + "%", cell_format)
+    worksheet.write(row + 2, col, "at size", cell_format)
+    worksheet.write(row + 2, col + 1, str(data["max_size"]), cell_format)
+
+    return row + 3
+
+
+def prefix_sum_alg(worksheet, row, col, name, data, arch_name):
+    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+    data = list(data.values())[0]
+
+    worksheet.merge_range(row, 0, row + 2, 0, "prefix sum", cell_format)
+    worksheet.merge_range(row, 1, row + 2, 1, "memory-bound -> bandwidth-bound -> LLC-bound", cell_format)
+
+    worksheet.write(row, col, "bandwidth", cell_format)
+    worksheet.write(row, col + 1, str("{:.1f}".format(data["bandwidth"])) + " GB/s", cell_format)
+    worksheet.write(row + 1, col, "efficiency", cell_format)
+    worksheet.write(row + 1, col + 1, str("{:.1f}".format(data["efficiency"])) + "%", cell_format)
+
+    return row + 2
+
+
+def create_diagrams(worksheet, arch_name, first_row, last_row, col, diag_row, diag_col, name, col_shift):
     # Create a new chart object.
     chart = workbook.add_chart({'type': 'line'})
 
     # Add a series to the chart.
     chart.add_series({
-        'categories': [SHEET_NAME, first_row, col, last_row, col],
-        'values':     [SHEET_NAME, first_row, col + 1, last_row, col + 1],
+        'categories': [SHEET_NAME, first_row, SHIFT+col+2*col_shift, last_row, SHIFT+col+2*col_shift],
+        'values':     [SHEET_NAME, first_row, SHIFT+col+2*col_shift + 1, last_row, SHIFT+col+2*col_shift + 1],
         'line':       {'color': 'red'},
         'name': arch_name})
 
     chart.set_title({'name': name})
+    chart.set_size({'width': 420, 'height': 320})
 
     # Insert the chart into the worksheet.
     worksheet.insert_chart(diag_row, diag_col, chart)
@@ -332,10 +381,10 @@ if __name__ == "__main__":
         worksheet.set_column(3*index + 1, 3*index + 3, 25)
         add_stats_to_table(testing_results, worksheet, 3*index + 2)
         create_diagrams(worksheet, arch_name, first_gather_L1_row, last_gather_L1_row, 3*index + 2, 1, (index + 1)*10,
-                        "L1 latency")
+                        "L1 latency", 0)
         create_diagrams(worksheet, arch_name, first_gather_LLC_row, last_gather_LLC_row, 3*index + 2, 20,
-                        (index + 1)*10, "LLC latency")
+                        (index + 1)*10, "LLC latency", 1)
         create_diagrams(worksheet, arch_name, first_gather_DRAM_row, last_gather_DRAM_row, 3*index + 2, 40,
-                        (index + 1)*10, "DRAM latency")
+                        (index + 1)*10, "DRAM latency", 2)
     workbook.close()
 

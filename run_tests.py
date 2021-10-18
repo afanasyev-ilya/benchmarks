@@ -35,11 +35,6 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                                     " -mode 2",
                                     " -mode 3"],
                "gemm_alg": [" -size 10000 "],
-               "stencil_1D_alg": [" -size 100000000 -r 1",
-                                  " -size 100000000 -r 3",
-                                  " -size 100000000 -r 5",
-                                  " -size 100000000 -r 7",
-                                  " -size 100000000 -r 9"],
                "primes_alg": [" -size 100000 "],
                "fib_ker": [" -size 100000000000 "],
                "dense_vec_ker": [" -large-size 4GB -mode 0",
@@ -58,13 +53,18 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                                             " -large-size 2GB -mode 3"],
                "LLC_bandwidth_ker": [" -large-size 1MB ", " -large-size 3MB ", " -large-size 6MB "],
                "prefix_sum_alg": [" -large-size 23MB "],
-               "stencil_1D_alg": [" -size 100000000 -r 7 -mode 0 ", " -size 100000000 -r 7 -mode 1 "]}
+               "stencil_1D_alg": [" -size 100000000 -r 7 -mode 0 ",
+                                  " -size 100000000 -r 7 -mode 1 "],
+               "naive_transpose_alg": [" -size 20000 -mode 0 ", " -size 20000 -mode 1",
+                                       " -size 25000 -mode 0 ", " -size 25000 -mode 1",
+                                       " -size 30000 -mode 0 ", " -size 30000 -mode 1"]}
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
                          "primes_alg": "scalar", "lehmer_ker": "scalar", "fib_ker": "scalar"}
 generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1", "norm_alg": "DRAM",
-                        "LLC_bandwidth_ker": "LLC", "prefix_sum_alg": "LLC", "stencil_1D_alg": "L1"}
+                        "LLC_bandwidth_ker": "LLC", "prefix_sum_alg": "LLC",
+                        "naive_transpose_alg": "DRAM"}
 
 
 def run_benchmarks(benchmarks_list, options):
@@ -218,21 +218,9 @@ def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max
         bandwidths.append(timings["avg_bw"])
         cur_small_size += step_size
 
-    max_bw = 0
-    max_pos = 0
-    min_bw = sys.float_info.max
-    min_pos = 0
     testing_results[benchmark_name + "_" + mode] = {}
     for cur_size, cur_band in zip(sizes, bandwidths):
-        if cur_band > max_bw:
-            max_bw = cur_band
-            max_pos = cur_size
-        if cur_band < min_bw:
-            min_bw = cur_band
-            min_pos = cur_size
         testing_results[benchmark_name + "_" + mode][cur_size] = cur_band
-    print("min: " + str(min_bw) + " GB/s " + " at " + str(min_pos))
-    print("max: " + str(max_bw) + " GB/s " + " at " + str(max_pos))
 
 
 def benchmark_gather(benchmark_name, benchmark_parameters, options, testing_results):
@@ -240,8 +228,8 @@ def benchmark_gather(benchmark_name, benchmark_parameters, options, testing_resu
     l2_size = get_cache_size("L2")
     l3_size = get_cache_size("L3")
     benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  l1_size, t2b("1KB"))
-    benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, l2_size,  l3_size, t2b("1MB"))
-    benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, l3_size,  t2b("1GB"), t2b("50MB"))
+    benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, l2_size*2,  l3_size, t2b("1MB"))
+    benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, l3_size*2,  t2b("1GB"), t2b("50MB"))
 
 
 def benchmark_scatter(benchmark_name, benchmark_parameters, options, testing_results):
