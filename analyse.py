@@ -33,7 +33,7 @@ ordered_benchmarks = ["fma_ker", "gemm_alg",  # compute -> vector -> unit
                       "compute_latency_ker",  # compute -> vector -> latency
 
                       "fib_ker", "sha1_alg",  # compute -> scalar -> unit
-                      "lehmer_ker", "primes_alg",  # compute -> scalar -> latency
+                      "lehmer_ker", "randgen_ker", "primes_alg",  # compute -> scalar -> latency
 
                       "L1_bandwidth_ker", "stencil_1D_alg",  # memory -> bandwidth -> L1
                       "LLC_bandwidth_ker", "prefix_sum_alg",  # memory -> bandwidth -> LLC
@@ -140,21 +140,31 @@ def sha1_alg(worksheet, row, col, name, data, arch_name):
 
 def compute_latency_ker(worksheet, row, col, name, data, arch_name):
     description = ["Performs a sequence of sqrt and fma operations."]
-    add_generic_compute_header(worksheet, row, col, "compute latency kernel", "cpu-bound -> vector-bound -> latency-bound", description)
-    add_generic_compute_content(worksheet, row, col, list(data.values()))
-    return row + 2
-
-
-def primes_alg(worksheet, row, col, name, data, arch_name):
-    description = ["Detects first N prime numbers. Unlike lemher kernel is also affected by workload imbalance issues."]
-    add_generic_compute_header(worksheet, row, col, "prime numbers detection algorithms", "cpu-bound -> scalar-bound -> latency-bound", description)
+    add_generic_compute_header(worksheet, row, col, "compute latency kernel",
+                               "cpu-bound -> vector-bound -> latency-bound", description)
     add_generic_compute_content(worksheet, row, col, list(data.values()))
     return row + 2
 
 
 def lehmer_ker(worksheet, row, col, name, data, arch_name):
     description = ["X_k+1= a* X_k mod m, used for random numbers generation, for example in rand() gcc implementation."]
+    add_generic_compute_header(worksheet, row, col, "lehmer kernel", "cpu-bound -> scalar-bound -> latency-bound",
+                               description)
+    add_generic_compute_content(worksheet, row, col, list(data.values()))
+    return row + 2
+
+
+def randgen_ker(worksheet, row, col, name, data, arch_name):
+    description = ["Generates random numbers using rand() function."]
     add_generic_compute_header(worksheet, row, col, "lehmer kernel", "cpu-bound -> scalar-bound -> latency-bound", description)
+    add_generic_compute_content(worksheet, row, col, list(data.values()))
+    return row + 2
+
+
+def primes_alg(worksheet, row, col, name, data, arch_name):
+    description = ["Detects first N prime numbers. Unlike lemher kernel is also affected by workload imbalance issues."]
+    add_generic_compute_header(worksheet, row, col, "prime numbers detection algorithms",
+                               "cpu-bound -> scalar-bound -> latency-bound", description)
     add_generic_compute_content(worksheet, row, col, list(data.values()))
     return row + 2
 

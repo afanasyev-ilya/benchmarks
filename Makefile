@@ -48,7 +48,7 @@ endif
 
 all: create_folders kernels algorithms
 
-kernels: scatter_ker gather_ker fma_ker compute_latency_ker lehmer_ker L1_bandwidth_ker fib_ker dense_vec_ker interconnect_band_ker interconnect_latency_ker LLC_bandwidth_ker
+kernels: scatter_ker gather_ker fma_ker compute_latency_ker lehmer_ker L1_bandwidth_ker fib_ker dense_vec_ker interconnect_band_ker interconnect_latency_ker LLC_bandwidth_ker randgen_ker
 
 algorithms: gemm_alg norm_alg stencil_1D_alg primes_alg prefix_sum_alg naive_transpose_alg sha1_alg
 

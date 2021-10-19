@@ -53,11 +53,11 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                                             " -large-size 2GB -mode 3"],
                "LLC_bandwidth_ker": [" -large-size 1MB ", " -large-size 3MB ", " -large-size 6MB "],
                "prefix_sum_alg": [" -large-size 23MB "],
-               "stencil_1D_alg": [" -size 100000000 -r 7 -mode 0 ",
-                                  " -size 100000000 -r 7 -mode 1 "],
+               "stencil_1D_alg": [" -size 100000000 -r 7 -mode 0 "],
                "naive_transpose_alg": [" -size 25000 -mode 0 ",
                                        " -size 25000 -mode 1"],
-               "sha1_alg": [ " -large-size 1GB "]}
+               "sha1_alg": [ " -large-size 1GB "],
+               "randgen_ker": [ " -large-size 1GB " ]}
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
