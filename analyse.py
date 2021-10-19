@@ -32,7 +32,7 @@ SHIFT = 100
 ordered_benchmarks = ["fma_ker", "gemm_alg",  # compute -> vector -> unit
                       "compute_latency_ker",  # compute -> vector -> latency
 
-                      "fib_ker",  # compute -> scalar -> unit
+                      "fib_ker", "sha1_alg",  # compute -> scalar -> unit
                       "lehmer_ker", "primes_alg",  # compute -> scalar -> latency
 
                       "L1_bandwidth_ker", "stencil_1D_alg",  # memory -> bandwidth -> L1
@@ -127,6 +127,13 @@ def gemm_alg(worksheet, row, col, name, data, arch_name):
 def fib_ker(worksheet, row, col, name, data, arch_name):
     description = ["Each core calculates it's onw Fibonachi sequence."]
     add_generic_compute_header(worksheet, row, col, "fibonachi kernel", "cpu-bound -> scalar-bound -> unit-bound", description)
+    add_generic_compute_content(worksheet, row, col, list(data.values()))
+    return row + 2
+
+
+def sha1_alg(worksheet, row, col, name, data, arch_name):
+    description = ["computes sha1 transformation using code from https://gist.github.com/jrabbit/1042021."]
+    add_generic_compute_header(worksheet, row, col, "sha1 algorithm", "cpu-bound -> scalar-bound -> unit-bound", description)
     add_generic_compute_content(worksheet, row, col, list(data.values()))
     return row + 2
 
