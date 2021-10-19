@@ -10,6 +10,7 @@ import pprint
 import xlsxwriter
 import collections
 import sys
+import random
 
 
 SHEET_NAME = "main_stats"
@@ -278,8 +279,8 @@ def gather_common(row, col, worksheet, cell_format, data, col_shift):
 
     shift = 0
     for size, bw in data.items():
-        worksheet.write(row + shift, SHIFT + col + 2*col_shift, str(size), cell_format)
-        worksheet.write(row + shift, SHIFT + col + 2*col_shift+1, int(bw), cell_format)
+        worksheet.write(row + shift, SHIFT + 2*col_shift + col * 6, str(size), cell_format)
+        worksheet.write(row + shift, SHIFT + 2*col_shift + col * 6 + 1, int(bw), cell_format)
         shift += 1
 
 
@@ -339,16 +340,23 @@ def naive_transpose_alg(worksheet, row, col, name, data, arch_name):
     return row + 2*len(descriptions)
 
 
-def create_diagrams(worksheet, arch_name, first_row, last_row, col, diag_row, diag_col, name, col_shift):
+def create_diagrams(worksheet, arch_names, first_row, last_row, first_col, diag_row, diag_col, name, col_shift):
     # Create a new chart object.
     chart = workbook.add_chart({'type': 'line'})
 
     # Add a series to the chart.
-    chart.add_series({
-        'categories': [SHEET_NAME, first_row, SHIFT+col+2*col_shift, last_row, SHIFT+col+2*col_shift],
-        'values':     [SHEET_NAME, first_row, SHIFT+col+2*col_shift + 1, last_row, SHIFT+col+2*col_shift + 1],
-        'line':       {'color': 'red'},
-        'name': arch_name})
+    arch_col = 4
+
+    for arch_name in arch_names:
+        number_of_colors = 1
+        color = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+                 for i in range(number_of_colors)]
+        chart.add_series({
+            'categories': [SHEET_NAME, first_row, first_col + 6*arch_col, last_row, first_col + 6*arch_col],
+            'values':     [SHEET_NAME, first_row, first_col + 6*arch_col + 1, last_row, first_col + 6*arch_col + 1],
+            'line':       {'color': color[0]},
+            'name': arch_name})
+        arch_col += 1
 
     chart.set_title({'name': name})
     chart.set_size({'width': 420, 'height': 320})
@@ -399,6 +407,7 @@ if __name__ == "__main__":
     worksheet.set_column(2, 2, 25)
     worksheet.set_column(3, 3, 15)
 
+    arch_names = []
     for index, file_name in enumerate(list_of_files):
         with open(file_name, 'r') as f:
             data = f.read()
@@ -407,11 +416,13 @@ if __name__ == "__main__":
 
         worksheet.set_column(index + 4, index + 4, 20)
         add_stats_to_table(testing_results, worksheet, index + 4)
-        create_diagrams(worksheet, arch_name, first_gather_L1_row, last_gather_L1_row, 3*index + 2, 1, (index + 1)*10,
-                        "L1 latency", 0)
-        create_diagrams(worksheet, arch_name, first_gather_LLC_row, last_gather_LLC_row, 3*index + 2, 20,
-                        (index + 1)*10, "LLC latency", 1)
-        create_diagrams(worksheet, arch_name, first_gather_DRAM_row, last_gather_DRAM_row, 3*index + 2, 40,
-                        (index + 1)*10, "DRAM latency", 2)
+        arch_names.append(arch_name)
+
+    create_diagrams(worksheet, arch_names, first_gather_L1_row, last_gather_L1_row, SHIFT + 2*0,
+                    1, 10, "L1 latency", 0)
+    create_diagrams(worksheet, arch_names, first_gather_LLC_row, last_gather_LLC_row, SHIFT + 2*1,
+                    20, 10, "LLC latency", 1)
+    create_diagrams(worksheet, arch_names, first_gather_DRAM_row, last_gather_DRAM_row, SHIFT + 2*2,
+                    40, 10, "DRAM latency", 2)
     workbook.close()
 

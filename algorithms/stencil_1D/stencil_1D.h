@@ -41,7 +41,7 @@ void kernel_basic(AT * __restrict__ a, const AT * __restrict__ b, const size_t s
 
 #ifdef __USE_AVX_512__
 #define ADD(OFFSET) \
-data = _mm512_load_ps(&b[i - 5]);\
+data = _mm512_load_ps(&b[i + OFFSET]);\
 vec_sum = _mm512_add_ps(vec_sum, data);
 #endif
 
