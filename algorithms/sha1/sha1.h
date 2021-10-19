@@ -34,7 +34,7 @@ void init(AT* data, size_t size)
 #define R3(v,w,x,y,z,i) z+=(((w|x)&y)|(w&x))+blk(i)+0x8F1BBCDC+rol(v,5);w=rol(w,30);
 #define R4(v,w,x,y,z,i) z+=(w^x^y)+blk(i)+0xCA62C1D6+rol(v,5);w=rol(w,30);
 
-void SHA1Transform(u_int32_t state[5], unsigned char buffer[64])
+void SHA1Transform(u_int32_t *state, unsigned char *buffer)
 {
     u_int32_t a, b, c, d, e;
     typedef union {
@@ -90,13 +90,18 @@ void SHA1Transform(u_int32_t state[5], unsigned char buffer[64])
 }
 
 template <typename AT>
-AT kernel(AT* data, size_t size)
+void kernel(AT* data, size_t size)
 {
     #pragma omp parallel
     {
         u_int32_t state[5];
+        state[0] = 0;
+        state[1] = 0;
+        state[2] = 0;
+        state[3] = 0;
+        state[4] = 0;
         #pragma omp for
-        for(size_t i = 0; i < size; i += 64)
+        for(size_t i = 0; i < (size - 64); i += 64)
         {
             SHA1Transform(state, &data[i]);
         }
