@@ -2,7 +2,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Parser::Parser()
+ParserBenchmark::ParserBenchmark()
 {
     radius = 1;
     mode = 0;
@@ -42,7 +42,7 @@ inline size_t get_size_in_bytes(const std::string& s)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Parser::parse_args(int _argc, char **_argv)
+void ParserBenchmark::parse_args(int _argc, char **_argv)
 {
     // get params from cmd line
     for (int i = 1; i < _argc; i++)

@@ -98,8 +98,9 @@ def run_benchmarks(benchmarks_list, options):
 
 def run_and_wait(cmd, options):
     print("Running " + cmd)
-    os.environ['OMP_NUM_THREADS'] = str(options.threads)
-    os.environ['OMP_PROC_BIND'] = "close"
+    if options.arch != "a64fx":
+        os.environ['OMP_NUM_THREADS'] = str(options.threads)
+        os.environ['OMP_PROC_BIND'] = "close"
 
     p = subprocess.Popen(cmd, shell=True,
                          stdin=subprocess.PIPE,
@@ -225,12 +226,19 @@ def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max
 
 
 def benchmark_gather(benchmark_name, benchmark_parameters, options, testing_results):
-    l1_size = get_cache_size("L1")
-    l2_size = get_cache_size("L2")
-    l3_size = get_cache_size("L3")
-    benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  l1_size, t2b("1KB"))
-    benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, l2_size*2,  l3_size, t2b("1MB"))
-    benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, l3_size*2,  t2b("1GB"), t2b("50MB"))
+    if options.arch == "a64fx":
+        l1_size = 64*1024
+        l2_size = 32*1024*1024
+        benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  l1_size, t2b("1KB"))
+        benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, l1_size*2,  l2_size, t2b("1MB"))
+        benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, l2_size*2,  t2b("1GB"), t2b("50MB"))
+    else:
+        l1_size = get_cache_size("L1")
+        l2_size = get_cache_size("L2")
+        l3_size = get_cache_size("L3")
+        benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  l1_size, t2b("1KB"))
+        benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, l2_size*2,  l3_size, t2b("1MB"))
+        benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, l3_size*2,  t2b("1GB"), t2b("50MB"))
 
 
 def benchmark_scatter(benchmark_name, benchmark_parameters, options, testing_results):
@@ -256,8 +264,12 @@ def benchmark_scatter(benchmark_name, benchmark_parameters, options, testing_res
 
 
 def benchmark_LLC_bandwidth(benchmark_name, benchmark_parameters, options, testing_results):
-    prev_LLC_size = get_cache_size(get_prev_LLC_name(options.arch))
-    LLC_size = get_cache_size(get_LLC_name(options.arch))
+    if options.arch != "a64fx":
+        prev_LLC_size = get_cache_size(get_prev_LLC_name(options.arch))
+        LLC_size = get_cache_size(get_LLC_name(options.arch))
+    else:
+        prev_LLC_size = 64*1024
+        LLC_size = 32*1024*1024
     num_arrays = 3
     one_array_size = (prev_LLC_size*2) / num_arrays
 
@@ -312,7 +324,8 @@ if __name__ == "__main__":
     benchmarks_list = []
     if options.bench == "all":
         benchmarks_list = exec_params.keys()
-        make_binaries()
+        if options.arch is not "a64fx":
+            make_binaries(options.arch)
     else:
         benchmarks_list = options.bench.split(",")
     run_benchmarks(benchmarks_list, options)

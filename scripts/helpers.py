@@ -133,13 +133,14 @@ def get_arch():  # returns architecture, eigher kunpeng or intel_xeon
     return architecture
 
 
-def make_binaries():
-    arch = get_arch()
+def make_binaries(arch):
     arch_params = ""
     if "intel" in arch:
         arch_params = "CXX=icpc ARCH=intel"
     elif "kunpeng" in arch:
         arch_params = "CXX=g++ ARCH=kunpeng"
+    elif "a64fx" in arch:
+        arch_params = "CXX=FCCpx ARCH=a64fx"
     else:
         raise Exception("Unsupported architecture for compilation")
 

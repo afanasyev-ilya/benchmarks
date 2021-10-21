@@ -47,7 +47,6 @@ void MemoryAPI::free_host_array(_T *_ptr)
 template <typename _T>
 void MemoryAPI::copy(_T *_dst, _T *_src, size_t _size)
 {
-    #pragma _NEC ivdep
     #pragma omp parallel
     for(long long i = 0; i < _size; i++)
     {
@@ -60,7 +59,6 @@ void MemoryAPI::copy(_T *_dst, _T *_src, size_t _size)
 template <typename _T>
 void MemoryAPI::set(_T *_data, _T _val, size_t _size)
 {
-    #pragma _NEC ivdep
     #pragma omp parallel for
     for(long long i = 0; i < _size; i++)
     {

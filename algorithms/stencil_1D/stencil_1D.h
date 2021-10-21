@@ -121,8 +121,10 @@ void kernel(int mode, AT * __restrict__ a, const AT * __restrict__ b, const size
 {
     if(mode == 0)
         kernel_basic(a, b, size, radius);
+    #ifdef __USE_AVX_512__
     else if(mode == 1)
         kernel_optimized(a, b, size, radius);
     else if(mode == 2)
         kernel_optimized_transposed(a, b, size, radius);
+    #endif
 }

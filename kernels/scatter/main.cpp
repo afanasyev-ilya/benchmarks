@@ -5,7 +5,7 @@ typedef int index_type;
 
 #include "scatter.h"
 
-void call_kernel(Parser &parser)
+void call_kernel(ParserBenchmark &parser)
 {
     size_t large_size = parser.get_large_size() / sizeof(base_type);
     size_t small_size = parser.get_small_size() / sizeof(base_type);
@@ -48,7 +48,7 @@ void call_kernel(Parser &parser)
 
 int main(int argc, char **argv)
 {
-    Parser parser;
+    ParserBenchmark parser;
     parser.parse_args(argc, argv);
 
     call_kernel(parser);

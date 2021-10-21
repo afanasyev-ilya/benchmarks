@@ -11,13 +11,17 @@ typedef float base_type;
 #define SIMD_SIZE 512
 #endif
 
+#ifdef __USE_A64FX__
+#define SIMD_SIZE 512
+#endif
+
 #ifdef __USE_KUNPENG_920__
 #define SIMD_SIZE 128
 #endif
 
 #include "L1_bandwidth.h"
 
-void call_kernel(Parser &parser)
+void call_kernel(ParserBenchmark &parser)
 {
     size_t size = LINEAR_SIZE;
     int mode = parser.get_mode();
@@ -67,7 +71,7 @@ void call_kernel(Parser &parser)
 
 int main(int argc, char **argv)
 {
-    Parser parser;
+    ParserBenchmark parser;
     parser.parse_args(argc, argv);
 
     call_kernel(parser);

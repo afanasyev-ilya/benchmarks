@@ -17,7 +17,7 @@ typedef long long index_type;
 
 #include "gather.h"
 
-void call_kernel(Parser &parser)
+void call_kernel(ParserBenchmark &parser)
 {
     #ifdef __USE_A64_FX__
     cout << " !!!!!!!!!!!! " << endl;
@@ -76,7 +76,7 @@ void call_kernel(Parser &parser)
 
 int main(int argc, char **argv)
 {
-    Parser parser;
+    ParserBenchmark parser;
     parser.parse_args(argc, argv);
 
     call_kernel(parser);

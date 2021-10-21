@@ -2,7 +2,7 @@ COMPILER=$(CXX)
 
 ifeq ($(COMPILER),g++)
 	ARCH_COMPILER=g++
-	Include_Path = -I ./
+	Include_Path = -I ./ -I ./common/external_libraries/VectorGraphLibrary
 
 	ifeq ($(ARCH),kunpeng)
     	Flags = -D __USE_KUNPENG_920__ -O2 -std=c++17 -fno-trapping-math -fopenmp-simd -fopenmp  -ffreestanding -fopt-info-vec-all=report.lst -ffast-math -march=armv8.2-a -mtune=tsv110 #-Wno-aggressive-loop-optimizations
@@ -22,7 +22,7 @@ endif
 
 ifeq ($(COMPILER),icpc)
 	ARCH_COMPILER=icpc
-	Include_Path = -I ./
+	Include_Path = -I ./ -I ./common/external_libraries/VectorGraphLibrary
 
     ifeq ($(ARCH),intel)
         Flags = -D __USE_INTEL__ -O2 -std=c++17 -D NOFUNCCALL -qopt-report=1 -qopt-report-phase=vec -qopenmp -ffreestanding -qopt-streaming-stores=always -xCORE-AVX512 -mprefer-vector-width=512
@@ -32,12 +32,12 @@ ifeq ($(COMPILER),icpc)
   	Library_Path =
 endif
 
-ifeq ($(COMPILER),fccpx)
-	ARCH_COMPILER=fccpx
-	Include_Path = -I ./
+ifeq ($(COMPILER),FCCpx)
+	ARCH_COMPILER=FCCpx
+	Include_Path = -I ./ -I ./common/external_libraries/VectorGraphLibrary
 
     ifeq ($(ARCH),a64fx)
-        Flags = -D __USE_A64FX__ -O2 -std=c++17 -Kfast,openmp -Nfjomplib -mcmodel=large -D_A64FX -Kzfill
+        Flags = -D __USE_A64FX__ -O2 -Kfast,openmp -Nfjomplib -mcmodel=large -D_A64FX -Kzfill -march=armv8-a+sve
     endif
 
   	Libraries = -fopenmp

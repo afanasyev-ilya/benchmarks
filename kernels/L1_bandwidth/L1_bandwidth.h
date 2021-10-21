@@ -856,8 +856,9 @@ float Kernel_read_no_paral_instr(AT **chunk, size_t cache_size) // Без пар
     }
     return return_val;
 }
-#endif 
+#endif
 
+#if defined(__USE_INTEL__) || defined(__USE_KUNPENG__)
 template<typename AT>
 float kernel(int core_type, AT **chunk_read, AT **chunk_write, size_t cache_size, int *random_accesses)
 {
@@ -871,3 +872,12 @@ float kernel(int core_type, AT **chunk_read, AT **chunk_write, size_t cache_size
         return Kernel_random_read(chunk_read, _32KB_, random_accesses);
     return 0;
 }
+#endif
+
+#ifdef __USE_A64FX__
+template<typename AT>
+float kernel(int core_type, AT **chunk_read, AT **chunk_write, size_t cache_size, int *random_accesses)
+{
+    return 0;
+}
+#endif

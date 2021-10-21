@@ -9,6 +9,12 @@
 #define SIMD_SIZE_D 8
 #endif
 
+#ifdef __USE_A64FX__
+#define __USE_SVE__
+#define SIMD_SIZE_S 16
+#define SIMD_SIZE_D 8
+#endif
+
 #ifdef __USE_KUNPENG_920__
 #define __USE_ARM_NEON__
 #define SIMD_SIZE_S 4
@@ -17,7 +23,7 @@
 
 #include "fma.h"
 
-void call_kernel_s(Parser &parser)
+void call_kernel_s(ParserBenchmark &parser)
 {
     size_t size = 1024*1024;
     cout << "DATA TYPE: " << "float" << endl;
@@ -60,7 +66,7 @@ void call_kernel_s(Parser &parser)
     MemoryAPI::free_array(out_data);
 }
 
-void call_kernel_d(Parser &parser)
+void call_kernel_d(ParserBenchmark &parser)
 {
     size_t size = 1024*1024;
     cout << "DATA TYPE: " << "double" << endl;
@@ -104,7 +110,7 @@ void call_kernel_d(Parser &parser)
 
 int main(int argc, char **argv)
 {
-    Parser parser;
+    ParserBenchmark parser;
     parser.parse_args(argc, argv);
 
     if(parser.get_datatype() == __FLOAT__)

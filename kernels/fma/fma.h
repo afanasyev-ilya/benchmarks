@@ -2,8 +2,9 @@
 #include <immintrin.h>
 #elif __USE_KUNPENG_920__
 #include <arm_neon.h>
+#elif __USE_A64FX__
+#include <arm_sve.h>
 #endif
-
 
 template<typename DT>
 void init(DT *in_data, DT *out_data, size_t size)
@@ -35,7 +36,7 @@ void re_init(DT *in_data, DT *out_data, size_t size)
     }
 }
 
-#ifdef __USE_INTEL__
+#if defined (__USE_INTEL__) || defined (__USE_A64FX__)
 inline void fma(float reg_res[], float a[], float b[], float c[])
 {
     reg_res[0] = a[0] * b[0] + c[0];
@@ -85,7 +86,7 @@ inline void fma(double reg_res[], double a[], double b[], double c[])
 }
 #endif
 
-#ifdef __USE_INTEL__
+#if defined (__USE_INTEL__) || defined (__USE_A64FX__)
 inline void copy_reg(float dst[], float src[])
 {
     dst[0] = src[0];
@@ -207,6 +208,28 @@ reg5 = vfmaq_laneq_f64(reg5, reg, reg, 0);\
 reg6 = vfmaq_laneq_f64(reg6, reg, reg, 0);\
 reg7 = vfmaq_laneq_f64(reg7, reg, reg, 0);\
 reg8 = vfmaq_laneq_f64(reg8, reg, reg, 0);
+#endif
+
+#ifdef __USE_SVE__
+#define SVE_FMA_GROUP_S(reg) \
+reg1 = svmla_lane_f32(reg1, reg, reg, 0);\
+reg2 = svmla_lane_f32(reg2, reg, reg, 0);\
+reg3 = svmla_lane_f32(reg3, reg, reg, 0);\
+reg4 = svmla_lane_f32(reg4, reg, reg, 0);\
+reg5 = svmla_lane_f32(reg5, reg, reg, 0);\
+reg6 = svmla_lane_f32(reg6, reg, reg, 0);\
+reg7 = svmla_lane_f32(reg7, reg, reg, 0);\
+reg8 = svmla_lane_f32(reg8, reg, reg, 0);
+
+#define AVX_512_FMA_GROUP_D(reg) \
+reg1 = svmla_lane_f64(reg1, reg, reg, 0);\
+reg2 = svmla_lane_f64(reg2, reg, reg, 0);\
+reg3 = svmla_lane_f64(reg3, reg, reg, 0);\
+reg4 = svmla_lane_f64(reg4, reg, reg, 0);\
+reg5 = svmla_lane_f64(reg5, reg, reg, 0);\
+reg6 = svmla_lane_f64(reg6, reg, reg, 0);\
+reg7 = svmla_lane_f64(reg7, reg, reg, 0);\
+reg8 = svmla_lane_f64(reg8, reg, reg, 0);
 #endif
 
 template<typename DT, int SIMD_SIZE>
@@ -521,6 +544,80 @@ void kernel_asm(double *in_data, double *out_data, size_t size)
 }
 #endif
 
+#ifdef __USE_A64FX__
+void kernel_asm(float *in_data, float *out_data, size_t size)
+{
+    #pragma omp parallel
+    {
+        svfloat32_t reg1= svdup_n_f32(0);
+        svfloat32_t reg2= svdup_n_f32(0);
+        svfloat32_t reg3= svdup_n_f32(0);
+        svfloat32_t reg4= svdup_n_f32(0);
+        svfloat32_t reg5= svdup_n_f32(0);
+        svfloat32_t reg6= svdup_n_f32(0);
+        svfloat32_t reg7= svdup_n_f32(0);
+        svfloat32_t reg8= svdup_n_f32(0);
+
+        svfloat32_t reg1_old= svdup_n_f32(0);
+        svfloat32_t reg2_old= svdup_n_f32(0);
+        svfloat32_t reg3_old= svdup_n_f32(0);
+        svfloat32_t reg4_old= svdup_n_f32(0);
+        svfloat32_t reg5_old= svdup_n_f32(0);
+        svfloat32_t reg6_old= svdup_n_f32(0);
+        svfloat32_t reg7_old= svdup_n_f32(0);
+        svfloat32_t reg8_old= svdup_n_f32(0);
+
+        svbool_t pred = svwhilelt_b32_u32(0, size);
+
+        #pragma omp for schedule(static)
+        for (size_t i = 0; i < size; i += NUM_VECTORS*SIMD_SIZE_S)
+        {
+            reg1 = svld1_f32(pred, in_data + i + SIMD_SIZE_S*1);
+            reg2 = svld1_f32(pred, in_data + i + SIMD_SIZE_S*2);
+            reg3 = svld1_f32(pred, in_data + i + SIMD_SIZE_S*3);
+            reg4 = svld1_f32(pred, in_data + i + SIMD_SIZE_S*4);
+            reg5 = svld1_f32(pred, in_data + i + SIMD_SIZE_S*5);
+            reg6 = svld1_f32(pred, in_data + i + SIMD_SIZE_S*6);
+            reg7 = svld1_f32(pred, in_data + i + SIMD_SIZE_S*7);
+            reg8 = svld1_f32(pred, in_data + i + SIMD_SIZE_S*8);
+
+            for(int step = 0; step < INNER_FMA_ITERATIONS; step++)
+            {
+                reg1_old = reg1;
+                reg2_old = reg2;
+                reg3_old = reg3;
+                reg4_old = reg4;
+                reg5_old = reg5;
+                reg6_old = reg6;
+                reg7_old = reg7;
+                reg8_old = reg8;
+
+                /*SVE_FMA_GROUP_S(reg1_old)
+                SVE_FMA_GROUP_S(reg2_old)
+                SVE_FMA_GROUP_S(reg3_old)
+                SVE_FMA_GROUP_S(reg4_old)
+                SVE_FMA_GROUP_S(reg5_old)
+                SVE_FMA_GROUP_S(reg6_old)
+                SVE_FMA_GROUP_S(reg7_old)
+                SVE_FMA_GROUP_S(reg8_old)*/
+            }
+            svst1_f32(pred, out_data + i + SIMD_SIZE_S*1, reg1);
+            svst1_f32(pred, out_data + i + SIMD_SIZE_S*2, reg2);
+            svst1_f32(pred, out_data + i + SIMD_SIZE_S*3, reg3);
+            svst1_f32(pred, out_data + i + SIMD_SIZE_S*4, reg4);
+            svst1_f32(pred, out_data + i + SIMD_SIZE_S*5, reg5);
+            svst1_f32(pred, out_data + i + SIMD_SIZE_S*6, reg6);
+            svst1_f32(pred, out_data + i + SIMD_SIZE_S*7, reg7);
+            svst1_f32(pred, out_data + i + SIMD_SIZE_S*8, reg8);
+        }
+    }
+}
+
+void kernel_asm(double *in_data, double *out_data, size_t size)
+{
+
+}
+#endif
 
 template<typename DT, int SIMD_SIZE>
 void kernel(OPT_MODE mode, DT *in_data, DT *out_data, size_t size)

@@ -5,7 +5,7 @@
 
 #include "lehmer.h"
 
-void call_kernel(Parser &parser)
+void call_kernel(ParserBenchmark &parser)
 {
     size_t size = 1024*1024;
     print_size("size", size*sizeof(float));
@@ -44,7 +44,7 @@ void call_kernel(Parser &parser)
 
 int main(int argc, char **argv)
 {
-    Parser parser;
+    ParserBenchmark parser;
     parser.parse_args(argc, argv);
 
     call_kernel(parser);

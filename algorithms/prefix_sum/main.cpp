@@ -3,7 +3,7 @@
 
 typedef double base_type;
 
-void call_kernel(Parser &parser)
+void call_kernel(ParserBenchmark &parser)
 {
     size_t size = parser.get_large_size() / sizeof(base_type);
     print_size("large_size", size*sizeof(base_type));
@@ -37,7 +37,7 @@ void call_kernel(Parser &parser)
 
 int main(int argc, char **argv)
 {
-    Parser parser;
+    ParserBenchmark parser;
     parser.parse_args(argc, argv);
 
     call_kernel(parser);

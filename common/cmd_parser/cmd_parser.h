@@ -15,7 +15,7 @@ enum OPT_MODE
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Parser
+class ParserBenchmark
 {
 private:
     size_t radius;
@@ -30,7 +30,7 @@ private:
     DATATYPE_USED datatype;
     OPT_MODE opt_mode;
 public:
-    Parser();
+    ParserBenchmark();
 
     size_t get_radius() { return radius; };
     size_t get_mode() { return mode; };

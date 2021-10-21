@@ -220,6 +220,12 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
 }
 #endif
 
+#ifdef __USE_A64FX__
+void kernel_asm(float *in_data, float *out_data, size_t size)
+{
+
+}
+#endif
 
 template<typename DT, int SIMD_SIZE>
 void kernel(DT *in_data, DT *out_data, size_t size)
