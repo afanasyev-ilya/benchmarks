@@ -19,7 +19,14 @@
 using namespace std;
 
 #include "helpers.h"
+
+#ifndef __VGL_USED__
 #include "timer/timer.h"
+#endif
+
 #include "cmd_parser/cmd_parser.h"
 #include "performance_counter/performance_counter.h"
+
+#ifndef __VGL_USED__
 #include "memory_API/memory_API.h"
+#endif

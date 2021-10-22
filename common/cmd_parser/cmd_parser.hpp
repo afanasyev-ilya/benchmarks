@@ -14,6 +14,8 @@ ParserBenchmark::ParserBenchmark()
 
     datatype = __FLOAT__;
     opt_mode = GENERIC;
+
+    graph_scale = 10;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,6 +69,11 @@ void ParserBenchmark::parse_args(int _argc, char **_argv)
         if ((option.compare("-s") == 0) || (option.compare("-size") == 0))
         {
             size = atoi(_argv[++i]);
+        }
+
+        if (option.compare("-scale") == 0)
+        {
+            graph_scale = atoi(_argv[++i]);
         }
 
         if ((option.compare("-opt-mode") == 0))

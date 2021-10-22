@@ -25,8 +25,8 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                                "max_small_size": "512MB"},
                "fma_ker": [" -opt-mode gen -datatype flt",
                            " -opt-mode gen -datatype dbl",
-                           " -opt-mode opt -datatype flt",
-                           " -opt-mode opt -datatype dbl"],
+                           " -opt-mode gen -datatype flt",
+                           " -opt-mode gen -datatype dbl"],
                "compute_latency_ker": [""],
                "lehmer_ker": [""],
                "norm_alg": [" -large-size 2GB" ],
@@ -57,7 +57,8 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                "naive_transpose_alg": [" -size 25000 -mode 0 ",
                                        " -size 25000 -mode 1"],
                "sha1_alg": [ " -large-size 1GB "],
-               "randgen_ker": [ " -large-size 1GB " ]}
+               "randgen_ker": [ " -large-size 1GB " ],
+               "bellman_ford_alg": [ " " ]}
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
@@ -66,6 +67,7 @@ generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar",
 generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1", "norm_alg": "DRAM",
                         "LLC_bandwidth_ker": "LLC", "prefix_sum_alg": "LLC",
                         "naive_transpose_alg": "DRAM"}
+generic_graph = {"bellman_ford_alg": "teps"}
 
 
 def run_benchmarks(benchmarks_list, options):
@@ -82,12 +84,17 @@ def run_benchmarks(benchmarks_list, options):
             benchmark_interconnect(benchmark_name, exec_params[benchmark_name], options, testing_results)
         elif benchmark_name == "LLC_bandwidth_ker":
             benchmark_LLC_bandwidth(benchmark_name, exec_params[benchmark_name], options, testing_results)
+
         elif benchmark_name in generic_compute_bound.keys():
             generic_compute_bound_benchmark(benchmark_name, exec_params[benchmark_name], options,
                                             generic_compute_bound[benchmark_name], testing_results)
         elif benchmark_name in generic_memory_bound.keys():
             generic_memory_bound_benchmark(benchmark_name, exec_params[benchmark_name], options,
-                                            generic_memory_bound[benchmark_name], testing_results)
+                                           generic_memory_bound[benchmark_name], testing_results)
+        elif benchmark_name in generic_graph.keys():
+            generic_graph_benchmark(benchmark_name, exec_params[benchmark_name], options,
+                                    generic_graph[benchmark_name], testing_results)
+
         else:
             generic_benchmark(benchmark_name, [], options, testing_results)
 
@@ -202,6 +209,42 @@ def generic_memory_bound_benchmark(benchmark_name, benchmark_parameters, options
         testing_results[benchmark_name][params]["efficiency"] = 100.0*bw/peak_values["bandwidths"][roof_name]
 
 
+def test_graph(benchmark_name, options, testing_results, scale, mode):
+    cmd = "./bin/" + benchmark_name + " -scale " + str(scale)
+    string_output = run_and_wait(cmd, options)
+    timings = parse_timings(string_output)
+    teps = timings["avg_flops"]
+    testing_results[benchmark_name + "_" + mode] = {"teps": teps}
+
+
+def graph_interconnect(benchmark_name, benchmark_parameters, options, testing_results):
+    cmd = "./bin/" + benchmark_name + " -scale 24 "
+
+    string_output = run_and_wait(cmd, options)
+    timings = parse_timings(string_output)
+    testing_results[benchmark_name + "_interconnect"] = {"one socket": timings["avg_flops"]}
+
+    old_threads = options.threads
+    options.threads = get_cores_count()*2 # TODO sockets count
+    string_output = run_and_wait(cmd, options)
+    timings = parse_timings(string_output)
+    testing_results[benchmark_name + "_interconnect"] = {"one socket": timings["avg_flops"]}
+    options.threads = old_threads
+
+
+def generic_graph_benchmark(benchmark_name, benchmark_parameters, options, roof_name, testing_results):
+    scale = adjust_scale(t2b("8KB"), get_L1_size(options.arch))
+    test_graph(benchmark_name, options, testing_results, scale, "l1_latency")
+
+    scale = adjust_scale(get_prev_LLC_size(options.arch), get_LLC_size(options.arch))
+    test_graph(benchmark_name, options, testing_results, scale, "LLC_latency")
+
+    scale = adjust_scale(get_LLC_size(options.arch) + t2b("10MB"), t2b("1GB"))
+    test_graph(benchmark_name, options, testing_results, scale, "DRAM_latency")
+
+    graph_interconnect(benchmark_name, benchmark_parameters, options, testing_results)
+
+
 def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max_size, step_size):
     cur_small_size = min_size
     sizes = []
@@ -226,19 +269,12 @@ def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max
 
 
 def benchmark_gather(benchmark_name, benchmark_parameters, options, testing_results):
-    if options.arch == "a64fx":
-        l1_size = 64*1024
-        l2_size = 32*1024*1024
-        benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  l1_size, t2b("1KB"))
-        benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, l1_size*2,  l2_size, t2b("1MB"))
-        benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, l2_size*2,  t2b("1GB"), t2b("50MB"))
-    else:
-        l1_size = get_cache_size("L1")
-        l2_size = get_cache_size("L2")
-        l3_size = get_cache_size("L3")
-        benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  l1_size, t2b("1KB"))
-        benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, l2_size*2,  l3_size, t2b("1MB"))
-        benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, l3_size*2,  t2b("1GB"), t2b("50MB"))
+    l1_size = get_L1_size(options.arch)
+    prev_LLC_size = get_prev_LLC_size(options.arch)
+    LLC_size = get_LLC_size(options.arch)
+    benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  l1_size, t2b("1KB"))
+    benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, prev_LLC_size*2,  LLC_size, t2b("1MB"))
+    benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, LLC_size*2,  t2b("1GB"), t2b("50MB"))
 
 
 def benchmark_scatter(benchmark_name, benchmark_parameters, options, testing_results):
@@ -264,12 +300,8 @@ def benchmark_scatter(benchmark_name, benchmark_parameters, options, testing_res
 
 
 def benchmark_LLC_bandwidth(benchmark_name, benchmark_parameters, options, testing_results):
-    if options.arch != "a64fx":
-        prev_LLC_size = get_cache_size(get_prev_LLC_name(options.arch))
-        LLC_size = get_cache_size(get_LLC_name(options.arch))
-    else:
-        prev_LLC_size = 64*1024
-        LLC_size = 32*1024*1024
+    prev_LLC_size = get_prev_LLC_size(options.arch)
+    LLC_size = get_LLC_size(options.arch)
     num_arrays = 3
     one_array_size = (prev_LLC_size*2) / num_arrays
 

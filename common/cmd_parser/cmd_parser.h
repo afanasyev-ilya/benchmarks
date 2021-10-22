@@ -29,6 +29,8 @@ private:
 
     DATATYPE_USED datatype;
     OPT_MODE opt_mode;
+
+    int graph_scale;
 public:
     ParserBenchmark();
 
@@ -36,6 +38,7 @@ public:
     size_t get_mode() { return mode; };
     size_t get_size() { return size; };
     int get_deg() { return deg; };
+    int get_graph_scale() {return graph_scale; };
 
     size_t get_small_size() {return small_size;};
     size_t get_large_size() {return large_size;};

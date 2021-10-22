@@ -46,16 +46,42 @@ def get_prev_LLC_name(arch_name):
     return roof_name
 
 
-def get_cache_size(cache_name):
-    output = subprocess.check_output(["lscpu"])
-    cores = -1
-    for item in output.decode().split("\n"):
-        if cache_name in item:
-            tmp = item.strip()
-            l1_dat = item.split(":")[1]
-            numbers = re.findall(r'\d+', l1_dat)
-            l1_dat = numbers[0] + "KB"
-            return t2b(l1_dat)
+def get_L1_size(arch_name):
+    return platform_specs[arch_name]["cache_sizes"]["L1"]
+
+
+def get_L2_size(arch_name):
+    return platform_specs[arch_name]["cache_sizes"]["L2"]
+
+
+def get_L3_size(arch_name):
+    return platform_specs[arch_name]["cache_sizes"]["L3"]
+
+
+def get_LLC_size(arch_name):
+    if arch_name == "a64fx":
+        return platform_specs[arch_name]["cache_sizes"]["L2"]
+    else:
+        return platform_specs[arch_name]["cache_sizes"]["L3"]
+
+
+def get_prev_LLC_size(arch_name):
+    if arch_name == "a64fx":
+        return platform_specs[arch_name]["cache_sizes"]["L1"]
+    else:
+        return platform_specs[arch_name]["cache_sizes"]["L2"]
+
+
+def adjust_scale(min_size, max_size):
+    cur_scale = 1
+    while True:
+        array_size = 4 * pow(2, cur_scale)
+        if min_size <= array_size < max_size:
+            print("selected scale " + str(cur_scale) + " is " + b2t(array_size))
+            return cur_scale
+        if max_size < array_size:
+            return 1
+        cur_scale += 1
 
 
 def get_timing_from_file_line(line, timings):
