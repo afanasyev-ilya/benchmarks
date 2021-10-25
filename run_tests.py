@@ -63,7 +63,7 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
                          "primes_alg": "scalar", "lehmer_ker": "scalar", "fib_ker": "scalar",
-                         "sha1_alg": "scalar"}
+                         "sha1_alg": "scalar", "randgen_ker": "scalar"}
 generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1", "norm_alg": "DRAM",
                         "LLC_bandwidth_ker": "LLC", "prefix_sum_alg": "LLC",
                         "naive_transpose_alg": "DRAM"}
@@ -221,14 +221,14 @@ def graph_interconnect(benchmark_name, benchmark_parameters, options, testing_re
     cmd = "./bin/" + benchmark_name + " -scale 24 "
 
     string_output = run_and_wait(cmd, options)
-    timings = parse_timings(string_output)
-    testing_results[benchmark_name + "_interconnect"] = {"one socket": timings["avg_flops"]}
+    one_timings = parse_timings(string_output)
 
     old_threads = options.threads
     options.threads = get_cores_count()*2 # TODO sockets count
     string_output = run_and_wait(cmd, options)
-    timings = parse_timings(string_output)
-    testing_results[benchmark_name + "_interconnect"] = {"one socket": timings["avg_flops"]}
+    both_timings = parse_timings(string_output)
+    testing_results[benchmark_name + "_interconnect"] = {"one socket": one_timings["avg_flops"],
+                                                         "two socket": both_timings["avg_flops"]}
     options.threads = old_threads
 
 

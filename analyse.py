@@ -40,10 +40,10 @@ ordered_benchmarks = ["fma_ker", "gemm_alg",  # compute -> vector -> unit
                       "dense_vec_ker", "norm_alg",  # memory -> bandwidth -> DRAM
                       "interconnect_band_ker",  # memory -> bandwidth -> interconnect
 
-                      "gather_ker_L1_latency",  # memory -> bandwidth -> L1
-                      "gather_ker_LLC_latency",  # memory -> bandwidth -> LLC
-                      "gather_ker_DRAM_latency", "naive_transpose_alg",  # memory -> bandwidth -> DRAM
-                      "interconnect_latency_ker",  # memory -> latency -> interconnect
+                      "gather_ker_L1_latency",  "bellman_ford_alg_l1_latency", # memory -> bandwidth -> L1
+                      "gather_ker_LLC_latency",  "bellman_ford_alg_LLC_latency", # memory -> bandwidth -> LLC
+                      "gather_ker_DRAM_latency", "naive_transpose_alg", "bellman_ford_alg_DRAM_latency",  # memory -> bandwidth -> DRAM
+                      "interconnect_latency_ker", "bellman_ford_alg_interconnect" # memory -> latency -> interconnect
 ]
 
 
@@ -156,7 +156,7 @@ def lehmer_ker(worksheet, row, col, name, data, arch_name):
 
 def randgen_ker(worksheet, row, col, name, data, arch_name):
     description = ["Generates random numbers using rand() function."]
-    add_generic_compute_header(worksheet, row, col, "lehmer kernel", "cpu-bound -> scalar-bound -> latency-bound", description)
+    add_generic_compute_header(worksheet, row, col, "randgen kernel", "cpu-bound -> scalar-bound -> latency-bound", description)
     add_generic_compute_content(worksheet, row, col, list(data.values()))
     return row + 2
 
@@ -368,6 +368,68 @@ def naive_transpose_alg(worksheet, row, col, name, data, arch_name):
     return row + 2*len(descriptions)
 
 
+def bellman_ford_alg_l1_latency(worksheet, row, col, name, data, arch_name):
+    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+
+    if col == FIRST_COL:
+        worksheet.write(row, 0, "bellman ford algorithm, L1 latency", cell_format)
+        worksheet.write(row, 1, "memory-bound -> latency-bound -> L1-bound", cell_format)
+        worksheet.write(row, 2, "Graph, vertices array of which fully fits into L1 cache", cell_format)
+
+    worksheet.write(row + 0, 3, "traversed edges per second", cell_format)
+    worksheet.write(row + 0, col, str(data["teps"]) + " MTEPS ", cell_format)
+
+    return row + 1
+
+
+def bellman_ford_alg_LLC_latency(worksheet, row, col, name, data, arch_name):
+    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+
+    if col == FIRST_COL:
+        worksheet.write(row, 0, "bellman ford algorithm, LLC latency", cell_format)
+        worksheet.write(row, 1, "memory-bound -> latency-bound -> LLC-bound", cell_format)
+        worksheet.write(row, 2, "Graph, vertices array of which fully fits into LLC cache, "
+                                                  "but does not fit into L1, L2, etc", cell_format)
+
+    worksheet.write(row + 0, 3, "traversed edges per second", cell_format)
+    worksheet.write(row + 0, col, str(data["teps"]) + " MTEPS ", cell_format)
+
+    return row + 1
+
+
+def bellman_ford_alg_DRAM_latency(worksheet, row, col, name, data, arch_name):
+    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+
+    if col == FIRST_COL:
+        worksheet.write(row, 0, "bellman ford algorithm, DRAM latency", cell_format)
+        worksheet.write(row, 1, "memory-bound -> latency-bound -> DRAM-bound", cell_format)
+        worksheet.write(row, 2, "Graph, vertices array of which fully fits into DRAM, "
+                                "but does not fit into LLC cache", cell_format)
+
+    worksheet.write(row + 0, 3, "traversed edges per second", cell_format)
+    worksheet.write(row + 0, col, str(data["teps"]) + " MTEPS ", cell_format)
+
+    return row + 1
+
+
+def bellman_ford_alg_interconnect(worksheet, row, col, name, data, arch_name):
+    cell_format = workbook.add_format({'text_wrap': True, 'valign': "top"})
+
+    if col == FIRST_COL:
+        worksheet.merge_range(row, 0, row + 1, 0, "bellman ford algorithm, DRAM latency", cell_format)
+        worksheet.merge_range(row, 1, row + 1, 1, "memory-bound -> latency-bound -> Interconnect-bound", cell_format)
+        worksheet.merge_range(row, 2, row + 1, 2, "Graph is distributed among 1 or 2 sockets. Edges are allocated in "
+                                                  "numa-friendly mode, indirectly accessed arrays are stored "
+                                                  "on the first socket", cell_format)
+
+    worksheet.write(row + 0, 3, "one socket, traversed edges per second", cell_format)
+    worksheet.write(row + 1, 3, "both socket, traversed edges per second", cell_format)
+    worksheet.write(row + 0, col, str(data["one socket"]) + " MTEPS ", cell_format)
+    worksheet.write(row + 1, col, str(data["two socket"]) + " MTEPS ", cell_format)
+
+    return row + 2
+
+
 def create_diagrams(worksheet, arch_names, first_row, last_row, first_col, diag_row, diag_col, name, col_shift):
     # Create a new chart object.
     chart = workbook.add_chart({'type': 'line'})
@@ -394,7 +456,7 @@ def create_diagrams(worksheet, arch_names, first_row, last_row, first_col, diag_
 
 
 def add_stats_to_table(testing_results, worksheet, position):
-    #print(json.dumps(testing_results, indent=4))
+    print(json.dumps(testing_results, indent=4))
 
     arch_name = testing_results["arch_name"]
     worksheet.write(0, position, arch_name)
