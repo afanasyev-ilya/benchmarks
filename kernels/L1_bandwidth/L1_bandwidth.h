@@ -858,7 +858,7 @@ float Kernel_read_no_paral_instr(AT **chunk, size_t cache_size) // Без пар
 }
 #endif
 
-#if defined(__USE_INTEL__) || defined(__USE_KUNPENG__)
+#if defined(__USE_INTEL__) || defined(__USE_KUNPENG_920__)
 template<typename AT>
 float kernel(int core_type, AT **chunk_read, AT **chunk_write, size_t cache_size, int *random_accesses)
 {

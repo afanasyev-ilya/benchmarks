@@ -545,7 +545,7 @@ void kernel_asm(double *in_data, double *out_data, size_t size)
 #endif
 
 #ifdef __USE_A64FX__
-void kernel_asm(float *in_data, float *out_data, size_t size)
+/*void kernel_asm(float *in_data, float *out_data, size_t size)
 {
     #pragma omp parallel
     {
@@ -592,14 +592,14 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
                 reg7_old = reg7;
                 reg8_old = reg8;
 
-                /*SVE_FMA_GROUP_S(reg1_old)
+                SVE_FMA_GROUP_S(reg1_old)
                 SVE_FMA_GROUP_S(reg2_old)
                 SVE_FMA_GROUP_S(reg3_old)
                 SVE_FMA_GROUP_S(reg4_old)
                 SVE_FMA_GROUP_S(reg5_old)
                 SVE_FMA_GROUP_S(reg6_old)
                 SVE_FMA_GROUP_S(reg7_old)
-                SVE_FMA_GROUP_S(reg8_old)*/
+                SVE_FMA_GROUP_S(reg8_old)
             }
             svst1_f32(pred, out_data + i + SIMD_SIZE_S*1, reg1);
             svst1_f32(pred, out_data + i + SIMD_SIZE_S*2, reg2);
@@ -611,11 +611,11 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
             svst1_f32(pred, out_data + i + SIMD_SIZE_S*8, reg8);
         }
     }
-}
+}*/
 
 void kernel_asm(double *in_data, double *out_data, size_t size)
 {
-
+    kernel_basic(in_data, out_data, size); // since
 }
 #endif
 

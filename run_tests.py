@@ -135,6 +135,11 @@ def fma_benchmark(benchmark_name, benchmark_parameters, options, testing_results
         flops.append(timings["avg_flops"])
 
     peak_values = platform_specs[options.arch]
+    print("flt opt perf: " + str(flops[0]))
+    print("flt non-opt perf: " + str(flops[2]))
+    print("dbl opt perf: " + str(flops[1]))
+    print("dbl non-opt perf: " + str(flops[3]))
+
     max_flt_flops = max(flops[0], flops[2])
     max_dbl_flops = max(flops[1], flops[3])
     if flops[0] < flops[2]:

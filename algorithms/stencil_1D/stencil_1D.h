@@ -52,6 +52,7 @@ vec_sum = _mm512_add_ps(vec_sum, data);
 #endif
 
 
+#ifdef __USE_AVX_512__
 template<typename AT>
 void kernel_optimized(AT * __restrict__ a, const AT * __restrict__ b, const size_t size, const int radius)
 {
@@ -83,7 +84,9 @@ void kernel_optimized(AT * __restrict__ a, const AT * __restrict__ b, const size
         }
     }
 }
+#endif
 
+#ifdef __USE_AVX_512__
 template<typename AT>
 void kernel_optimized_transposed(AT * __restrict__ a, const AT * __restrict__ b, const size_t size, const int radius)
 {
@@ -115,16 +118,10 @@ void kernel_optimized_transposed(AT * __restrict__ a, const AT * __restrict__ b,
         }
     }
 }
+#endif
 
 template<typename AT>
 void kernel(int mode, AT * __restrict__ a, const AT * __restrict__ b, const size_t size, const int radius)
 {
-    if(mode == 0)
-        kernel_basic(a, b, size, radius);
-    #ifdef __USE_AVX_512__
-    else if(mode == 1)
-        kernel_optimized(a, b, size, radius);
-    else if(mode == 2)
-        kernel_optimized_transposed(a, b, size, radius);
-    #endif
+    kernel_basic(a, b, size, radius);
 }

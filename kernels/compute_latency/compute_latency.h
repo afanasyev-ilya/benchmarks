@@ -11,10 +11,10 @@ using std::string;
 template<typename DT>
 void init(DT *in_data, DT *out_data, size_t size)
 {
-#pragma omp parallel
+    #pragma omp parallel
     {
         unsigned int myseed = omp_get_thread_num();
-#pragma omp for schedule(static)
+        #pragma omp for schedule(static)
         for (size_t i = 0; i < size; i++)
         {
             in_data[i] = rand_r(&myseed);
@@ -49,51 +49,6 @@ reg6 = _mm512_fmadd_ps(_mm512_invsqrt_ps(reg6), reg, reg);\
 reg7 = _mm512_fmadd_ps(_mm512_invsqrt_ps(reg7), reg, reg);\
 reg8 = _mm512_fmadd_ps(_mm512_invsqrt_ps(reg8), reg, reg);
 #endif
-
-#ifdef __USE_ARM_NEON__
-#define ARM_NEON_FMA_GROUP_S(reg) \
-reciprocal1 = vrsqrteq_f32(reg1);\
-reciprocal1 = vmulq_f32(vrsqrtsq_f32(reg1, reciprocal1), reciprocal1);\
-reciprocal1 = vmulq_f32(vrsqrtsq_f32(reg1, reciprocal1), reciprocal1);\
-reciprocal1 = vmulq_f32(vrsqrtsq_f32(reg1, reciprocal1), reciprocal1);\
-reg1 = vfmaq_laneq_f32(reciprocal1, reg, reg, 0);\
-reciprocal2 = vrsqrteq_f32(reg2);\
-reciprocal2 = vmulq_f32(vrsqrtsq_f32(reg2, reciprocal2), reciprocal2);\
-reciprocal2 = vmulq_f32(vrsqrtsq_f32(reg2, reciprocal2), reciprocal2);\
-reciprocal2 = vmulq_f32(vrsqrtsq_f32(reg2, reciprocal2), reciprocal2);\
-reg2 = vfmaq_laneq_f32(reciprocal2, reg, reg, 0);\
-reciprocal3 = vrsqrteq_f32(reg3);\
-reciprocal3 = vmulq_f32(vrsqrtsq_f32(reg3, reciprocal3), reciprocal3);\
-reciprocal3 = vmulq_f32(vrsqrtsq_f32(reg3, reciprocal3), reciprocal3);\
-reciprocal3 = vmulq_f32(vrsqrtsq_f32(reg3, reciprocal3), reciprocal3);\
-reg3 = vfmaq_laneq_f32(reciprocal3, reg, reg, 0);\
-reciprocal4 = vrsqrteq_f32(reg4);\
-reciprocal4 = vmulq_f32(vrsqrtsq_f32(reg4, reciprocal4), reciprocal4);\
-reciprocal4 = vmulq_f32(vrsqrtsq_f32(reg4, reciprocal4), reciprocal4);\
-reciprocal4 = vmulq_f32(vrsqrtsq_f32(reg4, reciprocal4), reciprocal4);\
-reg4 = vfmaq_laneq_f32(reciprocal4, reg, reg, 0);\
-reciprocal5 = vrsqrteq_f32(reg5);\
-reciprocal5 = vmulq_f32(vrsqrtsq_f32(reg5, reciprocal5), reciprocal5);\
-reciprocal5 = vmulq_f32(vrsqrtsq_f32(reg5, reciprocal5), reciprocal5);\
-reciprocal5 = vmulq_f32(vrsqrtsq_f32(reg5, reciprocal5), reciprocal5);\
-reg5 = vfmaq_laneq_f32(reciprocal5, reg, reg, 0);\
-reciprocal6 = vrsqrteq_f32(reg1);\
-reciprocal6 = vmulq_f32(vrsqrtsq_f32(reg6, reciprocal6), reciprocal6);\
-reciprocal6 = vmulq_f32(vrsqrtsq_f32(reg6, reciprocal6), reciprocal6);\
-reciprocal6 = vmulq_f32(vrsqrtsq_f32(reg6, reciprocal6), reciprocal6);\
-reg6 = vfmaq_laneq_f32(reciprocal6, reg, reg, 0);\
-reciprocal7 = vrsqrteq_f32(reg7);\
-reciprocal7 = vmulq_f32(vrsqrtsq_f32(reg7, reciprocal7), reciprocal7);\
-reciprocal7 = vmulq_f32(vrsqrtsq_f32(reg7, reciprocal7), reciprocal7);\
-reciprocal7 = vmulq_f32(vrsqrtsq_f32(reg7, reciprocal7), reciprocal7);\
-reg7 = vfmaq_laneq_f32(reciprocal7, reg, reg, 0);\
-reciprocal8 = vrsqrteq_f32(reg1);\
-reciprocal8 = vmulq_f32(vrsqrtsq_f32(reg8, reciprocal8), reciprocal8);\
-reciprocal8 = vmulq_f32(vrsqrtsq_f32(reg8, reciprocal8), reciprocal8);\
-reciprocal8 = vmulq_f32(vrsqrtsq_f32(reg8, reciprocal8), reciprocal8);\
-reg8 = vfmaq_laneq_f32(reciprocal8, reg, reg, 0);
-#endif
-
 
 #ifdef __USE_INTEL__
 void kernel_asm(float *in_data, float *out_data, size_t size)
@@ -165,70 +120,159 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
 #endif
 
 
-#ifdef __USE_KUNPENG_920__
-void kernel_asm(float *in_data, float *out_data, size_t size)
+#define GENERIC_LOAD(reg, offset, data) \
+reg[0] = data[offset + 0];  \
+reg[1] = data[offset + 1];  \
+reg[2] = data[offset + 2];  \
+reg[3] = data[offset + 3];  \
+reg[4] = data[offset + 4];  \
+reg[5] = data[offset + 5];  \
+reg[6] = data[offset + 6];  \
+reg[7] = data[offset + 7];  \
+reg[8] = data[offset + 8];  \
+reg[9] = data[offset + 9];  \
+reg[10] = data[offset + 10];  \
+reg[11] = data[offset + 11];  \
+reg[12] = data[offset + 12];  \
+reg[13] = data[offset + 13];  \
+reg[14] = data[offset + 14];  \
+reg[15] = data[offset + 15];
+
+#define GENERIC_COPY(dst, src) \
+dst[0] = src[0];  \
+dst[1] = src[1];  \
+dst[2] = src[2];  \
+dst[3] = src[3];  \
+dst[4] = src[4];  \
+dst[5] = src[5];  \
+dst[6] = src[6];  \
+dst[7] = src[7];  \
+dst[8] = src[8];  \
+dst[9] = src[9];  \
+dst[10] = src[10];  \
+dst[11] = src[11];  \
+dst[12] = src[12];  \
+dst[13] = src[13];  \
+dst[14] = src[14];  \
+dst[15] = src[15];
+
+#define GENERIC_OP(result, fr, sr) \
+result[0] = sqrt(fr[0])+sr[0];\
+result[1] = sqrt(fr[1])+sr[1];\
+result[2] = sqrt(fr[2])+sr[2];\
+result[3] = sqrt(fr[3])+sr[3];\
+result[4] = sqrt(fr[4])+sr[4];\
+result[5] = sqrt(fr[5])+sr[5];\
+result[6] = sqrt(fr[6])+sr[6];\
+result[7] = sqrt(fr[7])+sr[7];\
+result[8] = sqrt(fr[8])+sr[8];\
+result[9] = sqrt(fr[9])+sr[9];\
+result[10] = sqrt(fr[10])+sr[10];\
+result[11] = sqrt(fr[11])+sr[11];\
+result[12] = sqrt(fr[12])+sr[12];\
+result[13] = sqrt(fr[13])+sr[13];\
+result[14] = sqrt(fr[14])+sr[14];\
+result[15] = sqrt(fr[15])+sr[15];\
+
+#define GENERIC_GROUP(reg) \
+GENERIC_OP(reg1, reg1_old, reg);\
+GENERIC_OP(reg2, reg2_old, reg);\
+GENERIC_OP(reg3, reg3_old, reg);\
+GENERIC_OP(reg4, reg4_old, reg);\
+GENERIC_OP(reg5, reg5_old, reg);\
+GENERIC_OP(reg6, reg6_old, reg);\
+GENERIC_OP(reg7, reg7_old, reg);\
+GENERIC_OP(reg8, reg8_old, reg);\
+
+
+#define GENERIC_STORE(reg, offset, data) \
+data[offset + 0] = reg[0];  \
+data[offset + 1] = reg[1];  \
+data[offset + 2] = reg[2];  \
+data[offset + 3] = reg[3];  \
+data[offset + 4] = reg[4];  \
+data[offset + 5] = reg[5];  \
+data[offset + 6] = reg[6];  \
+data[offset + 7] = reg[7];  \
+data[offset + 8] = reg[8];  \
+data[offset + 9] = reg[9];  \
+data[offset + 10] = reg[10];  \
+data[offset + 11] = reg[11];  \
+data[offset + 12] = reg[12];  \
+data[offset + 13] = reg[13];  \
+data[offset + 14] = reg[14];  \
+data[offset + 15] = reg[15];
+
+
+void kernel_generic(float *in_data, float *out_data, size_t size)
 {
     #pragma omp parallel
     {
-        float32x4_t reg1, reg2, reg3, reg4, reg5, reg6, reg7, reg8;
-        float32x4_t reg1_old, reg2_old, reg3_old, reg4_old, reg5_old, reg6_old, reg7_old, reg8_old;
-        float32x4_t reciprocal1, reciprocal2, reciprocal3, reciprocal4, reciprocal5, reciprocal6, reciprocal7, reciprocal8;
+        float reg1[SIMD_SIZE_S];
+        float reg2[SIMD_SIZE_S];
+        float reg3[SIMD_SIZE_S];
+        float reg4[SIMD_SIZE_S];
+        float reg5[SIMD_SIZE_S];
+        float reg6[SIMD_SIZE_S];
+        float reg7[SIMD_SIZE_S];
+        float reg8[SIMD_SIZE_S];
+
+        float reg1_old[SIMD_SIZE_S];
+        float reg2_old[SIMD_SIZE_S];
+        float reg3_old[SIMD_SIZE_S];
+        float reg4_old[SIMD_SIZE_S];
+        float reg5_old[SIMD_SIZE_S];
+        float reg6_old[SIMD_SIZE_S];
+        float reg7_old[SIMD_SIZE_S];
+        float reg8_old[SIMD_SIZE_S];
 
         #pragma omp for schedule(static)
-        for (size_t i = 0; i < size; i += NUM_VECTORS*SIMD_SIZE_S)
+        for (size_t i = 0; i < size; i += NUM_VECTORS * 16)
         {
-            reg1 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*0]));
-            reg2 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*1]));
-            reg3 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*2]));
-            reg4 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*3]));
-            reg5 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*4]));
-            reg6 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*5]));
-            reg7 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*6]));
-            reg8 = vld1q_f32(&(in_data[i + SIMD_SIZE_S*7]));
+            GENERIC_LOAD(reg1, i + SIMD_SIZE_S*0, in_data);
+            GENERIC_LOAD(reg2, i + SIMD_SIZE_S*1, in_data);
+            GENERIC_LOAD(reg3, i + SIMD_SIZE_S*2, in_data);
+            GENERIC_LOAD(reg4, i + SIMD_SIZE_S*3, in_data);
+            GENERIC_LOAD(reg5, i + SIMD_SIZE_S*4, in_data);
+            GENERIC_LOAD(reg6, i + SIMD_SIZE_S*5, in_data);
+            GENERIC_LOAD(reg7, i + SIMD_SIZE_S*6, in_data);
+            GENERIC_LOAD(reg8, i + SIMD_SIZE_S*7, in_data);
 
             for(int step = 0; step < INNER_FMA_ITERATIONS; step++)
             {
-                reg1_old = reg1;
-                reg2_old = reg2;
-                reg3_old = reg3;
-                reg4_old = reg4;
-                reg5_old = reg5;
-                reg6_old = reg6;
-                reg7_old = reg7;
-                reg8_old = reg8;
+                GENERIC_COPY(reg1_old, reg1);
+                GENERIC_COPY(reg2_old, reg2);
+                GENERIC_COPY(reg3_old, reg3);
+                GENERIC_COPY(reg4_old, reg4);
+                GENERIC_COPY(reg5_old, reg5);
+                GENERIC_COPY(reg6_old, reg6);
+                GENERIC_COPY(reg7_old, reg7);
+                GENERIC_COPY(reg8_old, reg8);
 
-                ARM_NEON_FMA_GROUP_S(reg1_old)
-                ARM_NEON_FMA_GROUP_S(reg2_old)
-                ARM_NEON_FMA_GROUP_S(reg3_old)
-                ARM_NEON_FMA_GROUP_S(reg4_old)
-                ARM_NEON_FMA_GROUP_S(reg5_old)
-                ARM_NEON_FMA_GROUP_S(reg6_old)
-                ARM_NEON_FMA_GROUP_S(reg7_old)
-                ARM_NEON_FMA_GROUP_S(reg8_old)
+                GENERIC_GROUP(reg1_old);
+                GENERIC_GROUP(reg2_old);
+                GENERIC_GROUP(reg3_old);
+                GENERIC_GROUP(reg4_old);
+                GENERIC_GROUP(reg5_old);
+                GENERIC_GROUP(reg6_old);
+                GENERIC_GROUP(reg7_old);
+                GENERIC_GROUP(reg8_old);
             }
 
-            vst1q_f32 (&out_data[i + SIMD_SIZE_D*0], reg1);
-            vst1q_f32 (&out_data[i + SIMD_SIZE_D*1], reg2);
-            vst1q_f32 (&out_data[i + SIMD_SIZE_D*2], reg3);
-            vst1q_f32 (&out_data[i + SIMD_SIZE_D*3], reg4);
-            vst1q_f32 (&out_data[i + SIMD_SIZE_D*4], reg5);
-            vst1q_f32 (&out_data[i + SIMD_SIZE_D*5], reg6);
-            vst1q_f32 (&out_data[i + SIMD_SIZE_D*6], reg7);
-            vst1q_f32 (&out_data[i + SIMD_SIZE_D*7], reg8);
+            GENERIC_STORE(reg1, i + SIMD_SIZE_S*0, in_data);
+            GENERIC_STORE(reg2, i + SIMD_SIZE_S*1, in_data);
+            GENERIC_STORE(reg3, i + SIMD_SIZE_S*2, in_data);
+            GENERIC_STORE(reg4, i + SIMD_SIZE_S*3, in_data);
+            GENERIC_STORE(reg5, i + SIMD_SIZE_S*4, in_data);
+            GENERIC_STORE(reg6, i + SIMD_SIZE_S*5, in_data);
+            GENERIC_STORE(reg7, i + SIMD_SIZE_S*6, in_data);
+            GENERIC_STORE(reg8, i + SIMD_SIZE_S*7, in_data);
         }
     }
 }
-#endif
 
-#ifdef __USE_A64FX__
-void kernel_asm(float *in_data, float *out_data, size_t size)
-{
-
-}
-#endif
-
-template<typename DT, int SIMD_SIZE>
+template<typename DT>
 void kernel(DT *in_data, DT *out_data, size_t size)
 {
-    kernel_asm(in_data, out_data, size);
+    kernel_generic(in_data, out_data, size);
 }
