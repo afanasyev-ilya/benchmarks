@@ -45,7 +45,7 @@ void Init(int mode, AT *a, AT *b, AT **chunk_read, AT **chunk_write, size_t size
     }
 }
 
-#ifdef __USE_KUNPENG_920__
+#ifdef __USE_KUNPENG_923__
 template<typename AT>
 float Kernel_read(AT **chunk, size_t cache_size)
 {
@@ -124,28 +124,26 @@ float Kernel_read(AT **chunk, size_t cache_size)
         float l_sum = 0;
         float temp[4];
         vst1q_f32(temp, local_sum1);
-        for (int iter = 0; iter < 16; iter++){
+        for (int iter = 0; iter < 4; iter++){
             l_sum += temp[iter];
         }
         vst1q_f32(temp, local_sum2);
-        for (int iter = 0; iter < 16; iter++){
+        for (int iter = 0; iter < 4; iter++){
             l_sum += temp[iter];
         }
         vst1q_f32(temp, local_sum3);
-        for (int iter = 0; iter < 16; iter++){
+        for (int iter = 0; iter < 4; iter++){
             l_sum += temp[iter];
         }
         vst1q_f32(temp, local_sum4);
-        for (int iter = 0; iter < 16; iter++){
+        for (int iter = 0; iter < 4; iter++){
             l_sum += temp[iter];
         }
         return_val = l_sum;
     }
     return return_val;
 }
-#endif 
-
-#ifdef __USE_INTEL__
+#elif defined(__USE_INTEL__)
 template<typename AT>
 float Kernel_read(AT **chunk, size_t cache_size)
 {
@@ -164,60 +162,60 @@ float Kernel_read(AT **chunk, size_t cache_size)
         {
             __m512 data1, data2, data3, data4;
 
-            data1 = _mm512_load_ps(chunk_start + offset + 16 * 0);
+            data1 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 0);
             local_sum1 = _mm512_add_ps(local_sum1, data1);
 
-            data2 = _mm512_load_ps(chunk_start + offset + 16 * 1);
+            data2 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 1);
             local_sum2 = _mm512_add_ps(local_sum2, data2);
 
-            data3 = _mm512_load_ps(chunk_start + offset + 16 * 2);
+            data3 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 2);
             local_sum3 = _mm512_add_ps(local_sum3, data3);
 
-            data4 = _mm512_load_ps(chunk_start + offset + 16 * 3);
+            data4 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 3);
             local_sum4 = _mm512_add_ps(local_sum4, data4);
 
 
-            data1 = _mm512_load_ps(chunk_start + offset + 16 * 4);
+            data1 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 4);
             local_sum1 = _mm512_add_ps(local_sum1, data1);
 
-            data2 = _mm512_load_ps(chunk_start + offset + 16 * 5);
+            data2 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 5);
             local_sum2 = _mm512_add_ps(local_sum2, data2);
 
-            data3 = _mm512_load_ps(chunk_start + offset + 16 * 6);
+            data3 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 6);
             local_sum3 = _mm512_add_ps(local_sum3, data3);
 
-            data4 = _mm512_load_ps(chunk_start + offset + 16 * 7);
+            data4 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 7);
             local_sum4 = _mm512_add_ps(local_sum4, data4);
 
 
-            data1 = _mm512_load_ps(chunk_start + offset + 16 * 8);
+            data1 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 8);
             local_sum1 = _mm512_add_ps(local_sum1, data1);
 
-            data2 = _mm512_load_ps(chunk_start + offset + 16 * 9);
+            data2 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 9);
             local_sum2 = _mm512_add_ps(local_sum2, data2);
 
-            data3 = _mm512_load_ps(chunk_start + offset + 16 * 10);
+            data3 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 10);
             local_sum3 = _mm512_add_ps(local_sum3, data3);
 
-            data4 = _mm512_load_ps(chunk_start + offset + 16 * 11);
+            data4 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 11);
             local_sum4 = _mm512_add_ps(local_sum4, data4);
 
 
-            data1 = _mm512_load_ps(chunk_start + offset + 16 * 12);
+            data1 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 12);
             local_sum1 = _mm512_add_ps(local_sum1, data1);
 
-            data2 = _mm512_load_ps(chunk_start + offset + 16 * 13);
+            data2 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 13);
             local_sum2 = _mm512_add_ps(local_sum2, data2);
 
-            data3 = _mm512_load_ps(chunk_start + offset + 16 * 14);
+            data3 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 14);
             local_sum3 = _mm512_add_ps(local_sum3, data3);
 
-            data4 = _mm512_load_ps(chunk_start + offset + 16 * 15);
+            data4 = _mm512_load_ps(chunk_start + offset + SIMD_SIZE * 15);
             local_sum4 = _mm512_add_ps(local_sum4, data4);
 
-            offset += 16 * 16;
+            offset += 16 * SIMD_SIZE;
 
-            if ((offset + 16 * 16) > (_16KB_ / sizeof(float))) {
+            if ((offset + 16 * SIMD_SIZE) > (_16KB_ / sizeof(float))) {
                 offset = 0;
             }
         }
@@ -245,9 +243,109 @@ float Kernel_read(AT **chunk, size_t cache_size)
     }
     return return_val;
 }
+#else
+template<typename AT>
+float Kernel_read(AT **chunk, size_t cache_size)
+{
+    float return_val = 0;
+    #pragma omp parallel
+    {
+        unsigned int thread_num = omp_get_thread_num();
+
+        float *chunk_start = chunk[thread_num];
+        unsigned int offset = 0;
+
+        float local_sum1[GEN_SIMD_SIZE];
+        float local_sum2[GEN_SIMD_SIZE];
+        float local_sum3[GEN_SIMD_SIZE];
+        float local_sum4[GEN_SIMD_SIZE];
+
+        for(int i = 0; i < RADIUS; i++)
+        {
+            float data1[GEN_SIMD_SIZE];
+            float data2[GEN_SIMD_SIZE];
+            float data3[GEN_SIMD_SIZE];
+            float data4[GEN_SIMD_SIZE];
+
+            GENERIC_LOAD(data1, (offset + GEN_SIMD_SIZE * 0), chunk_start);
+            GENERIC_ADD_PS(local_sum1, local_sum1, data1);
+
+            GENERIC_LOAD(data2, (offset + GEN_SIMD_SIZE * 1), chunk_start);
+            GENERIC_ADD_PS(local_sum2, local_sum2, data2);
+
+            GENERIC_LOAD(data3, (offset + GEN_SIMD_SIZE * 2), chunk_start);
+            GENERIC_ADD_PS(local_sum3, local_sum3, data1);
+
+            GENERIC_LOAD(data4, (offset + GEN_SIMD_SIZE * 3), chunk_start);
+            GENERIC_ADD_PS(local_sum4, local_sum4, data4);
+
+
+            GENERIC_LOAD(data1, (offset + GEN_SIMD_SIZE * 4), chunk_start);
+            GENERIC_ADD_PS(local_sum1, local_sum1, data1);
+
+            GENERIC_LOAD(data2, (offset + GEN_SIMD_SIZE * 5), chunk_start);
+            GENERIC_ADD_PS(local_sum2, local_sum2, data2);
+
+            GENERIC_LOAD(data3, (offset + GEN_SIMD_SIZE * 6), chunk_start);
+            GENERIC_ADD_PS(local_sum3, local_sum3, data1);
+
+            GENERIC_LOAD(data4, (offset + GEN_SIMD_SIZE * 7), chunk_start);
+            GENERIC_ADD_PS(local_sum4, local_sum4, data4);
+
+
+            GENERIC_LOAD(data1, (offset + GEN_SIMD_SIZE * 8), chunk_start);
+            GENERIC_ADD_PS(local_sum1, local_sum1, data1);
+
+            GENERIC_LOAD(data2, (offset + GEN_SIMD_SIZE * 9), chunk_start);
+            GENERIC_ADD_PS(local_sum2, local_sum2, data2);
+
+            GENERIC_LOAD(data3, (offset + GEN_SIMD_SIZE * 10), chunk_start);
+            GENERIC_ADD_PS(local_sum3, local_sum3, data1);
+
+            GENERIC_LOAD(data4, (offset + GEN_SIMD_SIZE * 11), chunk_start);
+            GENERIC_ADD_PS(local_sum4, local_sum4, data4);
+
+
+            GENERIC_LOAD(data1, (offset + GEN_SIMD_SIZE * 12), chunk_start);
+            GENERIC_ADD_PS(local_sum1, local_sum1, data1);
+
+            GENERIC_LOAD(data2, (offset + GEN_SIMD_SIZE * 13), chunk_start);
+            GENERIC_ADD_PS(local_sum2, local_sum2, data2);
+
+            GENERIC_LOAD(data3, (offset + GEN_SIMD_SIZE * 14), chunk_start);
+            GENERIC_ADD_PS(local_sum3, local_sum3, data1);
+
+            GENERIC_LOAD(data4, (offset + GEN_SIMD_SIZE * 15), chunk_start);
+            GENERIC_ADD_PS(local_sum4, local_sum4, data4);
+
+            offset += GEN_SIMD_SIZE * 16;
+
+            if ((offset + GEN_SIMD_SIZE * 16) > (_16KB_ / sizeof(float))) {
+                offset = 0;
+            }
+        }
+
+        float l_sum = 0;
+        for (int iter = 0; iter < GEN_SIMD_SIZE; iter++){
+            l_sum += local_sum1[iter];
+        }
+
+        for (int iter = 0; iter < GEN_SIMD_SIZE; iter++){
+            l_sum += local_sum2[iter];
+        }
+        for (int iter = 0; iter < GEN_SIMD_SIZE; iter++){
+            l_sum += local_sum3[iter];
+        }
+        for (int iter = 0; iter < GEN_SIMD_SIZE; iter++){
+            l_sum += local_sum4[iter];
+        }
+        return_val = l_sum;
+    }
+    return return_val;
+}
 #endif
 
-#ifdef __USE_KUNPENG_920__
+#if defined(__USE_KUNPENG_920__)
 template<typename AT>
 float Kernel_random_read(AT **chunk, size_t cache_size, int *random_addresses)
 {
@@ -858,26 +956,16 @@ float Kernel_read_no_paral_instr(AT **chunk, size_t cache_size) // Без пар
 }
 #endif
 
-#if defined(__USE_INTEL__) || defined(__USE_KUNPENG_920__)
 template<typename AT>
 float kernel(int core_type, AT **chunk_read, AT **chunk_write, size_t cache_size, int *random_accesses)
 {
     if(core_type == 0)
         return Kernel_read(chunk_read, _32KB_);
-    if(core_type == 1) 
+    /*if(core_type == 1)
         return Kernel_read_and_write(chunk_read, chunk_write, _32KB_);
     if(core_type == 2) 
         return Kernel_read_no_paral_instr(chunk_read, _32KB_);
     if(core_type == 3)
-        return Kernel_random_read(chunk_read, _32KB_, random_accesses);
+        return Kernel_random_read(chunk_read, _32KB_, random_accesses);*/
     return 0;
 }
-#endif
-
-#ifdef __USE_A64FX__
-template<typename AT>
-float kernel(int core_type, AT **chunk_read, AT **chunk_write, size_t cache_size, int *random_accesses)
-{
-    return 0;
-}
-#endif

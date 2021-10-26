@@ -119,44 +119,7 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
 }
 #endif
 
-
-#define GENERIC_LOAD(reg, offset, data) \
-reg[0] = data[offset + 0];  \
-reg[1] = data[offset + 1];  \
-reg[2] = data[offset + 2];  \
-reg[3] = data[offset + 3];  \
-reg[4] = data[offset + 4];  \
-reg[5] = data[offset + 5];  \
-reg[6] = data[offset + 6];  \
-reg[7] = data[offset + 7];  \
-reg[8] = data[offset + 8];  \
-reg[9] = data[offset + 9];  \
-reg[10] = data[offset + 10];  \
-reg[11] = data[offset + 11];  \
-reg[12] = data[offset + 12];  \
-reg[13] = data[offset + 13];  \
-reg[14] = data[offset + 14];  \
-reg[15] = data[offset + 15];
-
-#define GENERIC_COPY(dst, src) \
-dst[0] = src[0];  \
-dst[1] = src[1];  \
-dst[2] = src[2];  \
-dst[3] = src[3];  \
-dst[4] = src[4];  \
-dst[5] = src[5];  \
-dst[6] = src[6];  \
-dst[7] = src[7];  \
-dst[8] = src[8];  \
-dst[9] = src[9];  \
-dst[10] = src[10];  \
-dst[11] = src[11];  \
-dst[12] = src[12];  \
-dst[13] = src[13];  \
-dst[14] = src[14];  \
-dst[15] = src[15];
-
-#define GENERIC_OP(result, fr, sr) \
+#define GENERIC_FMA_SQRT_OP(result, fr, sr) \
 result[0] = sqrt(fr[0])+sr[0];\
 result[1] = sqrt(fr[1])+sr[1];\
 result[2] = sqrt(fr[2])+sr[2];\
@@ -175,34 +138,14 @@ result[14] = sqrt(fr[14])+sr[14];\
 result[15] = sqrt(fr[15])+sr[15];\
 
 #define GENERIC_GROUP(reg) \
-GENERIC_OP(reg1, reg1_old, reg);\
-GENERIC_OP(reg2, reg2_old, reg);\
-GENERIC_OP(reg3, reg3_old, reg);\
-GENERIC_OP(reg4, reg4_old, reg);\
-GENERIC_OP(reg5, reg5_old, reg);\
-GENERIC_OP(reg6, reg6_old, reg);\
-GENERIC_OP(reg7, reg7_old, reg);\
-GENERIC_OP(reg8, reg8_old, reg);\
-
-
-#define GENERIC_STORE(reg, offset, data) \
-data[offset + 0] = reg[0];  \
-data[offset + 1] = reg[1];  \
-data[offset + 2] = reg[2];  \
-data[offset + 3] = reg[3];  \
-data[offset + 4] = reg[4];  \
-data[offset + 5] = reg[5];  \
-data[offset + 6] = reg[6];  \
-data[offset + 7] = reg[7];  \
-data[offset + 8] = reg[8];  \
-data[offset + 9] = reg[9];  \
-data[offset + 10] = reg[10];  \
-data[offset + 11] = reg[11];  \
-data[offset + 12] = reg[12];  \
-data[offset + 13] = reg[13];  \
-data[offset + 14] = reg[14];  \
-data[offset + 15] = reg[15];
-
+GENERIC_FMA_SQRT_OP(reg1, reg1_old, reg);\
+GENERIC_FMA_SQRT_OP(reg2, reg2_old, reg);\
+GENERIC_FMA_SQRT_OP(reg3, reg3_old, reg);\
+GENERIC_FMA_SQRT_OP(reg4, reg4_old, reg);\
+GENERIC_FMA_SQRT_OP(reg5, reg5_old, reg);\
+GENERIC_FMA_SQRT_OP(reg6, reg6_old, reg);\
+GENERIC_FMA_SQRT_OP(reg7, reg7_old, reg);\
+GENERIC_FMA_SQRT_OP(reg8, reg8_old, reg);\
 
 void kernel_generic(float *in_data, float *out_data, size_t size)
 {
