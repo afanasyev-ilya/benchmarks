@@ -260,62 +260,72 @@ float Kernel_read(AT **chunk, size_t cache_size)
         float local_sum3[GEN_SIMD_SIZE];
         float local_sum4[GEN_SIMD_SIZE];
 
+        float data1[GEN_SIMD_SIZE];
+        float data2[GEN_SIMD_SIZE];
+        float data3[GEN_SIMD_SIZE];
+        float data4[GEN_SIMD_SIZE];
+
+        GENERIC_SET_ZERO(local_sum1)
+        GENERIC_SET_ZERO(local_sum2)
+        GENERIC_SET_ZERO(local_sum3)
+        GENERIC_SET_ZERO(local_sum4)
+
+        GENERIC_SET_ZERO(data1)
+        GENERIC_SET_ZERO(data2)
+        GENERIC_SET_ZERO(data3)
+        GENERIC_SET_ZERO(data4)
+
         for(int i = 0; i < RADIUS; i++)
         {
-            float data1[GEN_SIMD_SIZE];
-            float data2[GEN_SIMD_SIZE];
-            float data3[GEN_SIMD_SIZE];
-            float data4[GEN_SIMD_SIZE];
-
-            GENERIC_LOAD(data1, (offset + GEN_SIMD_SIZE * 0), chunk_start);
+            GENERIC_LOAD_SH(data1, (chunk_start + offset + GEN_SIMD_SIZE * 0));
             GENERIC_ADD_PS(local_sum1, local_sum1, data1);
 
-            GENERIC_LOAD(data2, (offset + GEN_SIMD_SIZE * 1), chunk_start);
+            GENERIC_LOAD_SH(data2, (chunk_start + offset + GEN_SIMD_SIZE * 1));
             GENERIC_ADD_PS(local_sum2, local_sum2, data2);
 
-            GENERIC_LOAD(data3, (offset + GEN_SIMD_SIZE * 2), chunk_start);
+            GENERIC_LOAD_SH(data3, (chunk_start + offset + GEN_SIMD_SIZE * 2));
             GENERIC_ADD_PS(local_sum3, local_sum3, data1);
 
-            GENERIC_LOAD(data4, (offset + GEN_SIMD_SIZE * 3), chunk_start);
+            GENERIC_LOAD_SH(data4, (chunk_start + offset + GEN_SIMD_SIZE * 3));
             GENERIC_ADD_PS(local_sum4, local_sum4, data4);
 
 
-            GENERIC_LOAD(data1, (offset + GEN_SIMD_SIZE * 4), chunk_start);
+            GENERIC_LOAD_SH(data1, (chunk_start + offset + GEN_SIMD_SIZE * 4));
             GENERIC_ADD_PS(local_sum1, local_sum1, data1);
 
-            GENERIC_LOAD(data2, (offset + GEN_SIMD_SIZE * 5), chunk_start);
+            GENERIC_LOAD_SH(data2, (chunk_start + offset + GEN_SIMD_SIZE * 5));
             GENERIC_ADD_PS(local_sum2, local_sum2, data2);
 
-            GENERIC_LOAD(data3, (offset + GEN_SIMD_SIZE * 6), chunk_start);
+            GENERIC_LOAD_SH(data3, (chunk_start + offset + GEN_SIMD_SIZE * 6));
             GENERIC_ADD_PS(local_sum3, local_sum3, data1);
 
-            GENERIC_LOAD(data4, (offset + GEN_SIMD_SIZE * 7), chunk_start);
+            GENERIC_LOAD_SH(data4, (chunk_start + offset + GEN_SIMD_SIZE * 7));
             GENERIC_ADD_PS(local_sum4, local_sum4, data4);
 
 
-            GENERIC_LOAD(data1, (offset + GEN_SIMD_SIZE * 8), chunk_start);
+            GENERIC_LOAD_SH(data1, (chunk_start + offset + GEN_SIMD_SIZE * 8));
             GENERIC_ADD_PS(local_sum1, local_sum1, data1);
 
-            GENERIC_LOAD(data2, (offset + GEN_SIMD_SIZE * 9), chunk_start);
+            GENERIC_LOAD_SH(data2, (chunk_start + offset + GEN_SIMD_SIZE * 9));
             GENERIC_ADD_PS(local_sum2, local_sum2, data2);
 
-            GENERIC_LOAD(data3, (offset + GEN_SIMD_SIZE * 10), chunk_start);
+            GENERIC_LOAD_SH(data3, (chunk_start + offset + GEN_SIMD_SIZE * 10));
             GENERIC_ADD_PS(local_sum3, local_sum3, data1);
 
-            GENERIC_LOAD(data4, (offset + GEN_SIMD_SIZE * 11), chunk_start);
+            GENERIC_LOAD_SH(data4, (chunk_start + offset + GEN_SIMD_SIZE * 11));
             GENERIC_ADD_PS(local_sum4, local_sum4, data4);
 
 
-            GENERIC_LOAD(data1, (offset + GEN_SIMD_SIZE * 12), chunk_start);
+            GENERIC_LOAD_SH(data1, (chunk_start + offset + GEN_SIMD_SIZE * 12));
             GENERIC_ADD_PS(local_sum1, local_sum1, data1);
 
-            GENERIC_LOAD(data2, (offset + GEN_SIMD_SIZE * 13), chunk_start);
+            GENERIC_LOAD_SH(data2, (chunk_start + offset + GEN_SIMD_SIZE * 13));
             GENERIC_ADD_PS(local_sum2, local_sum2, data2);
 
-            GENERIC_LOAD(data3, (offset + GEN_SIMD_SIZE * 14), chunk_start);
+            GENERIC_LOAD_SH(data3, (chunk_start + offset + GEN_SIMD_SIZE * 14));
             GENERIC_ADD_PS(local_sum3, local_sum3, data1);
 
-            GENERIC_LOAD(data4, (offset + GEN_SIMD_SIZE * 15), chunk_start);
+            GENERIC_LOAD_SH(data4, (chunk_start + offset + GEN_SIMD_SIZE * 15));
             GENERIC_ADD_PS(local_sum4, local_sum4, data4);
 
             offset += GEN_SIMD_SIZE * 16;

@@ -47,6 +47,26 @@ op_reg[13] = op_data[(op_offset) + 13];  \
 op_reg[14] = op_data[(op_offset) + 14];  \
 op_reg[15] = op_data[(op_offset) + 15];
 
+
+#define GENERIC_LOAD_SH(op_reg, op_data) \
+op_reg[0] = op_data[0];  \
+op_reg[1] = op_data[1];  \
+op_reg[2] = op_data[2];  \
+op_reg[3] = op_data[3];  \
+op_reg[4] = op_data[4];  \
+op_reg[5] = op_data[5];  \
+op_reg[6] = op_data[6];  \
+op_reg[7] = op_data[7];  \
+op_reg[8] = op_data[8];  \
+op_reg[9] = op_data[9];  \
+op_reg[10] = op_data[10];  \
+op_reg[11] = op_data[11];  \
+op_reg[12] = op_data[12];  \
+op_reg[13] = op_data[13];  \
+op_reg[14] = op_data[14];  \
+op_reg[15] = op_data[15];
+
+
 #define GENERIC_COPY(dst, src) \
 dst[0] = src[0];  \
 dst[1] = src[1];  \
@@ -84,23 +104,23 @@ data[offset + 14] = reg[14];  \
 data[offset + 15] = reg[15];
 
 
-#define GENERIC_SET_ZERO(reg) \
-reg[0] = 0;\
-reg[1] = 0;\
-reg[2] = 0;\
-reg[3] = 0;\
-reg[4] = 0;\
-reg[5] = 0;\
-reg[6] = 0;\
-reg[7] = 0;\
-reg[8] = 0;\
-reg[9] = 0;\
-reg[10] = 0;\
-reg[11] = 0;\
-reg[12] = 0;\
-reg[13] = 0;\
-reg[14] = 0;\
-reg[15] = 0;
+#define GENERIC_SET_ZERO(op_reg) \
+op_reg[0] = 0;\
+op_reg[1] = 0;\
+op_reg[2] = 0;\
+op_reg[3] = 0;\
+op_reg[4] = 0;\
+op_reg[5] = 0;\
+op_reg[6] = 0;\
+op_reg[7] = 0;\
+op_reg[8] = 0;\
+op_reg[9] = 0;\
+op_reg[10] = 0;\
+op_reg[11] = 0;\
+op_reg[12] = 0;\
+op_reg[13] = 0;\
+op_reg[14] = 0;\
+op_reg[15] = 0;
 
 #define GENERIC_ADD_PS(op_res, op_arg1, op_arg2) \
 op_res[0] = op_arg1[0] + op_arg2[0];\
