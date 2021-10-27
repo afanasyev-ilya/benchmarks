@@ -1,13 +1,13 @@
 #ifdef __USE_INTEL__
-#define SIMD_SIZE 512
+#define SIMD_SIZE 16
 #endif
 
 #ifdef __USE_A64FX__
-#define SIMD_SIZE 512
+#define SIMD_SIZE 16
 #endif
 
 #ifdef __USE_KUNPENG_920__
-#define SIMD_SIZE 128
+#define SIMD_SIZE 4
 #endif
 
 #define GEN_SIMD_SIZE 16
@@ -39,7 +39,7 @@ void call_kernel(ParserBenchmark &parser)
     print_size("radius * threads", rad_size*sizeof(int));
     print_size("size", size);
 
-    size_t bytes_requested = (size_t) RADIUS * (GEN_SIMD_SIZE/sizeof(float)) * (size_t)INNER_LOADS * omp_get_max_threads();
+    size_t bytes_requested = (size_t) RADIUS * (GEN_SIMD_SIZE) * (size_t)INNER_LOADS * omp_get_max_threads();
     if (mode == 1 || mode == 5) {
         bytes_requested *= 2;
     }

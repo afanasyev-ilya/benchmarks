@@ -45,7 +45,7 @@ void Init(int mode, AT *a, AT *b, AT **chunk_read, AT **chunk_write, size_t size
     }
 }
 
-#ifdef __USE_KUNPENG_923__
+#ifdef __USE_KUNPENG_920__
 template<typename AT>
 float Kernel_read(AT **chunk, size_t cache_size)
 {

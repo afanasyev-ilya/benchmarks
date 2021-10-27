@@ -15,8 +15,9 @@ void call_kernel(ParserBenchmark &parser)
     init(x, size);
 
     size_t bytes_requested = size*sizeof(base_type)*2;
-    size_t flops_requested = (size/64)*(4*20*(7/*each r op*/ + 8/*2 rol*/ + (11 + 4/*blk*/)));
+    size_t flops_requested = (size/64)*(4*20*(9));
     auto counter = PerformanceCounter(bytes_requested, flops_requested);
+    // 7/*each r op*/ + 8/*2 rol*/ + (11 + 4/*blk*/)
 
 	for(int i = 0; i < iterations; i++)
 	{
