@@ -54,6 +54,7 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                "LLC_bandwidth_ker": [" -large-size 1MB ", " -large-size 3MB ", " -large-size 6MB "],
                "prefix_sum_alg": [" -large-size 23MB "],
                "stencil_1D_alg": [" -size 100000000 -r 7 -mode 0 "],
+               "rgb_cmyk_alg": [" -size 1000000000"],
                "naive_transpose_alg": [" -size 25000 -mode 0 ",
                                        " -size 25000 -mode 1"],
                "sha1_alg": [ " -large-size 1GB "],
@@ -66,7 +67,7 @@ generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar",
                          "sha1_alg": "scalar", "randgen_ker": "scalar"}
 generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1", "norm_alg": "DRAM",
                         "LLC_bandwidth_ker": "LLC", "prefix_sum_alg": "LLC",
-                        "naive_transpose_alg": "DRAM"}
+                        "naive_transpose_alg": "DRAM", "rgb_cmyk_alg": "LLC"}
 generic_graph = {"bellman_ford_alg": "teps"}
 
 
