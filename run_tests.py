@@ -54,7 +54,7 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                "LLC_bandwidth_ker": [" -large-size 1MB ", " -large-size 3MB ", " -large-size 6MB "],
                "prefix_sum_alg": [" -large-size 23MB "],
                "stencil_1D_alg": [" -size 100000000 -r 7 -mode 0 "],
-               "rgb_cmyk_alg": [" -size 1000000000"],
+               "rgb_cmyk_alg": [" -size 10"],
                "naive_transpose_alg": [" -size 25000 -mode 0 ",
                                        " -size 25000 -mode 1"],
                "sha1_alg": [ " -large-size 1GB "],
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     benchmarks_list = []
     if options.bench == "all":
         benchmarks_list = exec_params.keys()
-        if options.arch is not "a64fx":
+        if options.arch != "a64fx":
             make_binaries(options.arch)
     else:
         benchmarks_list = options.bench.split(",")
