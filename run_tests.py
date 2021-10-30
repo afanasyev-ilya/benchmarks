@@ -67,7 +67,7 @@ generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar",
                          "sha1_alg": "scalar", "randgen_ker": "scalar"}
 generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1", "norm_alg": "DRAM",
                         "LLC_bandwidth_ker": "LLC", "prefix_sum_alg": "LLC",
-                        "naive_transpose_alg": "DRAM", "rgb_cmyk_alg": "LLC"}
+                        "naive_transpose_alg": "DRAM", "rgb_cmyk_alg": "DRAM"}
 generic_graph = {"bellman_ford_alg": "teps"}
 
 
