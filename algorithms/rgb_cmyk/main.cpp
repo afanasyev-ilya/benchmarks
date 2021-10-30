@@ -1,10 +1,14 @@
 #include "common/lib.h"
+
+typedef char base_type;
+
 #include "rgb_cmyk.h"
 
 void call_kernel(ParserBenchmark &parser)
 {
-    size_t size = parser.get_size();
-    char *array;
+    size_t size = parser.get_large_size() / (3*sizeof(base_type));
+
+    base_type *array;
     /* size - area size of one frame, RGB uses 3 frames */
     MemoryAPI::allocate_array(&array, 3 * size);
 
@@ -14,7 +18,7 @@ void call_kernel(ParserBenchmark &parser)
 
     /* 2 passes on initial array - when we count K and other - when we substract K */
 
-    size_t bytes_requested = size * 3 * 2 * sizeof(char);
+    size_t bytes_requested = size * 3 * 2 * sizeof(base_type);
 
     /* Each size:
      * 3 op - index count (i*3), i*3 + 1, i*3 + 2
@@ -32,7 +36,7 @@ void call_kernel(ParserBenchmark &parser)
     {
         counter.start_timing();
 
-        kernel(array, size);
+        kernel(parser.get_opt_mode(), array, size);
 
         counter.end_timing();
         counter.update_counters();
