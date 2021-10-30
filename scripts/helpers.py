@@ -176,3 +176,21 @@ def make_binaries(arch):
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     p.wait()
+
+def compile_bench(arch, bench):
+    arch_params = ""
+    if "intel" in arch:
+        arch_params = "CXX=icpc ARCH=intel"
+    elif "kunpeng" in arch:
+        arch_params = "CXX=g++ ARCH=kunpeng"
+    elif "a64fx" in arch:
+        arch_params = "CXX=FCCpx ARCH=a64fx"
+    else:
+        raise Exception("Unsupported architecture for compilation")
+
+    cmd = "make " + bench + " " + arch_params
+    p = subprocess.Popen(cmd, shell=True,
+                         stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    p.wait()

@@ -14,7 +14,10 @@ max_threads = 64
 
 
 # all upper borders are inclusive
-exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
+exec_params = {"z_func_ker": {
+                    "length": "30000", # < 30Kb
+                },
+               "gather_ker": {"L1_latency": {"length": "3GB",
                                               "step": "1KB"},
                               "LLC_latency": {"length": "3GB",
                                               "step": "1MB"},
@@ -71,6 +74,9 @@ generic_graph = {"bellman_ford_alg": "teps"}
 
 
 def run_benchmarks(benchmarks_list, options):
+
+    compile_bench(options.arch, options.bench)
+
     testing_results = {"arch_name": options.arch}
     for benchmark_name in benchmarks_list:
         print("\n DOING " + benchmark_name + " BENCHMARK\n")
@@ -356,6 +362,10 @@ if __name__ == "__main__":
 
     if options.arch not in platform_specs:
         print("Unsupported target platform. Please add its specifications into roofline.py")
+        exit()
+
+    if options.bench not in exec_params:
+        print("Benchmark does not exist in run_tests.py")
         exit()
 
     benchmarks_list = []
