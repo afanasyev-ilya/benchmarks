@@ -971,11 +971,11 @@ float kernel(int core_type, AT **chunk_read, AT **chunk_write, size_t cache_size
 {
     if(core_type == 0)
         return Kernel_read(chunk_read, _32KB_);
-    /*if(core_type == 1)
+    if(core_type == 1)
         return Kernel_read_and_write(chunk_read, chunk_write, _32KB_);
     if(core_type == 2) 
         return Kernel_read_no_paral_instr(chunk_read, _32KB_);
     if(core_type == 3)
-        return Kernel_random_read(chunk_read, _32KB_, random_accesses);*/
+        return Kernel_random_read(chunk_read, _32KB_, random_accesses);
     return 0;
 }

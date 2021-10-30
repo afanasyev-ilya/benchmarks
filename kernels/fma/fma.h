@@ -369,7 +369,8 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
     }
 }
 
-void kernel_asm(double *in_data, double *out_data, size_t size)
+template<typename DT, int SIMD_SIZE>
+void kernel_asm(DT *in_data, DT *out_data, size_t size)
 {
     #pragma omp parallel
     {
@@ -491,7 +492,8 @@ void kernel_asm(float *in_data, float *out_data, size_t size)
     }
 }
 
-void kernel_asm(double *in_data, double *out_data, size_t size)
+template<typename DT, int SIMD_SIZE>
+void kernel_asm(DT *in_data, DT *out_data, size_t size)
 {
     #pragma omp parallel
     {
