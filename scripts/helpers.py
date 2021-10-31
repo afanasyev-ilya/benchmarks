@@ -189,6 +189,7 @@ def compile_bench(arch, bench):
         raise Exception("Unsupported architecture for compilation")
 
     cmd = "make " + bench + " " + arch_params
+    print(cmd)
     p = subprocess.Popen(cmd, shell=True,
                          stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE,

@@ -38,7 +38,7 @@ pair<int, int> z_function_count (vector<double> &z, char *s, int n) {
     return {flops, bytes};
 }
 
-vector<double> z_function (vector<double> &z, char *s, int n) {
+void z_function (vector<double> &z, char *s, int n) {
     for (int i = 1, l = 0, r = 0; i < n; ++i) {
         if (i <= r)
             z[i] = min((int)(r-i+1), (int)(z[i-l]));
@@ -47,7 +47,6 @@ vector<double> z_function (vector<double> &z, char *s, int n) {
         if (i+z[i]-1 > r)
             l = i, r = i+z[i]-1;
     }
-    return z;
 }
 
 void kernel(vector<double> &z, char *str, size_t size) {

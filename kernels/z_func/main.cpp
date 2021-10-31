@@ -19,8 +19,10 @@ void call_kernel(ParserBenchmark &parser)
     auto count = z_function_count(z, str, string_size);
     double flops_requested = count.first;
     double bytes_requested = count.second;
+    cout << flops_requested << " " << bytes_requested << endl;
     auto counter = PerformanceCounter(bytes_requested, flops_requested);
 
+    cout << string_size << endl;
     for(int i = 0; i < iterations; i++)
 	{
 		counter.start_timing();
