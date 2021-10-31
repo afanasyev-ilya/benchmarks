@@ -14,7 +14,10 @@ max_threads = 64
 
 
 # all upper borders are inclusive
-exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
+exec_params = {"z_func_ker": {
+                    "length": "30000", # < 30Kb
+                },
+               "gather_ker": {"L1_latency": {"length": "3GB",
                                               "step": "1KB"},
                               "LLC_latency": {"length": "3GB",
                                               "step": "1MB"},
@@ -54,7 +57,6 @@ exec_params = {"gather_ker": {"L1_latency": {"length": "3GB",
                "LLC_bandwidth_ker": [" -large-size 1MB ", " -large-size 3MB ", " -large-size 6MB "],
                "prefix_sum_alg": [" -large-size 23MB "],
                "stencil_1D_alg": [" -size 100000000 -r 7 -mode 0 "],
-               "rgb_cmyk_alg": [" -large-size 1GB -opt-mode gen ", " -large-size 1GB -opt-mode opt "],
                "naive_transpose_alg": [" -size 25000 -mode 0 ",
                                        " -size 25000 -mode 1"],
                "sha1_alg": [ " -large-size 1GB "],
@@ -67,11 +69,14 @@ generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar",
                          "sha1_alg": "scalar", "randgen_ker": "scalar"}
 generic_memory_bound = {"stencil_1D_alg": "L1", "dense_vec_ker": "DRAM", "L1_bandwidth_ker": "L1", "norm_alg": "DRAM",
                         "LLC_bandwidth_ker": "LLC", "prefix_sum_alg": "LLC",
-                        "naive_transpose_alg": "DRAM", "rgb_cmyk_alg": "DRAM"}
+                        "naive_transpose_alg": "DRAM"}
 generic_graph = {"bellman_ford_alg": "teps"}
 
 
 def run_benchmarks(benchmarks_list, options):
+
+    compile_bench(options.arch, options.bench)
+
     testing_results = {"arch_name": options.arch}
     for benchmark_name in benchmarks_list:
         print("\n DOING " + benchmark_name + " BENCHMARK\n")
@@ -359,10 +364,14 @@ if __name__ == "__main__":
         print("Unsupported target platform. Please add its specifications into roofline.py")
         exit()
 
+    if options.bench not in exec_params:
+        print("Benchmark does not exist in run_tests.py")
+        exit()
+
     benchmarks_list = []
     if options.bench == "all":
         benchmarks_list = exec_params.keys()
-        if options.arch != "a64fx":
+        if options.arch is not "a64fx":
             make_binaries(options.arch)
     else:
         benchmarks_list = options.bench.split(",")
