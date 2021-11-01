@@ -8,18 +8,26 @@
 #include <arm_sve.h>
 #endif
 
+#include <random>
+#include <algorithm>
+
 template<typename IT, typename DT>
 void rmat_init(DT *result, IT *indexes, DT *small_data, size_t large_size, size_t small_size)
 {
-    int seed;
-    #pragma omp parallel private(seed) num_threads(threads_count)
+    unsigned int seed = 0;
+    int _a_prob = 57;
+    int _b_prob = 19;
+    int _c_prob = 19;
+    int _d_prob = 5;
+    int n = (int)log2(small_size);
+    #pragma omp parallel private(seed)
     {
         seed = int(time(NULL)) * omp_get_thread_num();
 
         #pragma omp for schedule(guided, 1024)
-        for (long long cur_edge = 0; cur_edge < edges_count; cur_edge += step)
+        for (long long cur_edge = 0; cur_edge < large_size; cur_edge++)
         {
-            int x_middle = _vertices_count / 2, y_middle = _vertices_count / 2;
+            int x_middle = small_size / 2, y_middle = small_size / 2;
             for (long long i = 1; i < n; i++)
             {
                 int a_beg = 0, a_end = _a_prob;
@@ -97,7 +105,12 @@ void init(RAND_DATA_TYPE rand_data_type, DT *result, IT *indexes, DT *small_data
     if(rand_data_type == UNIFORM)
         uniform_init(result, indexes, small_data, large_size, small_size);
     else if(rand_data_type == RMAT)
-        uniform_init(result, indexes, small_data, large_size, small_size);
+        rmat_init(result, indexes, small_data, large_size, small_size);
+    else if(rand_data_type == RMAT_SHUFFLED)
+    {
+        rmat_init(result, indexes, small_data, large_size, small_size);
+        random_shuffle(indexes, indexes + large_size);
+    }
 
 }
 

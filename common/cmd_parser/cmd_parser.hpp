@@ -95,6 +95,8 @@ void ParserBenchmark::parse_args(int _argc, char **_argv)
                 rand_data_type = RMAT;
             else if(str == "uniform" || str == "UNIFORM")
                 rand_data_type = UNIFORM;
+            else if(str == "rmat_sh" || str == "rmat_shuffled")
+                rand_data_type = RMAT_SHUFFLED;
         }
 
         if ((option.compare("-dt") == 0) || (option.compare("-datatype") == 0))

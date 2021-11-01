@@ -61,7 +61,8 @@ exec_params = {"z_func_ker": {
                                        " -size 25000 -mode 1"],
                "sha1_alg": [ " -large-size 1GB "],
                "randgen_ker": [ " -large-size 1GB " ],
-               "bellman_ford_alg": [ " " ]}
+               "bellman_ford_alg": [ " " ],
+               "cache_conflicts": [" "]}
 
 
 generic_compute_bound = {"compute_latency_ker": "float", "scalar_ker": "scalar", "gemm_alg": "float",
@@ -82,6 +83,8 @@ def run_benchmarks(benchmarks_list, options):
         print("\n DOING " + benchmark_name + " BENCHMARK\n")
         if benchmark_name == "gather_ker":
             benchmark_gather(benchmark_name, exec_params[benchmark_name], options, testing_results)
+        if benchmark_name == "cache_conflicts":
+            benchmark_caches_conflicts(options, testing_results)
         elif benchmark_name == "scatter_ker":
             benchmark_scatter(benchmark_name, exec_params[benchmark_name], options, testing_results)
         elif benchmark_name == "fma_ker":
@@ -130,6 +133,41 @@ def generic_benchmark(benchmark_name, benchmark_parameters, options, testing_res
     cmd = "./bin/" + benchmark_name
     string_output = run_and_wait(cmd, options)
     print(parse_timings(string_output))
+
+
+def benchmark_caches_conflicts(options, testing_results):
+    cur_small_size = t2b("1KB")
+    sizes = []
+    bandwidths = []
+
+    while cur_small_size <= t2b("512MB"):
+        formatted_small_size = b2t(cur_small_size)
+        formatted_large_size = "512MB"
+
+        cmd = "./bin/gather_ker -small-size " + formatted_small_size + " -large-size " + \
+              formatted_large_size + " -rdt uniform"
+        string_output = run_and_wait(cmd, options)
+        timings_uniform = parse_timings(string_output)
+
+        cmd = "./bin/gather_ker -small-size " + formatted_small_size + " -large-size " + \
+              formatted_large_size + " -rdt rmat"
+        string_output = run_and_wait(cmd, options)
+        timings_rmat = parse_timings(string_output)
+
+        cmd = "./bin/gather_ker -small-size " + formatted_small_size + " -large-size " + \
+              formatted_large_size + " -rdt rmat_sh"
+        string_output = run_and_wait(cmd, options)
+        timings_rmat_sh = parse_timings(string_output)
+
+        sizes.append(formatted_small_size)
+        bandwidths.append({"uniform": timings_uniform["avg_bw"],
+                           "rmat": timings_rmat["avg_bw"],
+                           "rmat_shuffled": timings_rmat_sh["avg_bw"]})
+        cur_small_size *= 2
+
+    testing_results["cache_conflicts"] = {}
+    for cur_size, cur_band in zip(sizes, bandwidths):
+        testing_results["cache_conflicts"][cur_size] = cur_band
 
 
 def fma_benchmark(benchmark_name, benchmark_parameters, options, testing_results):
@@ -256,7 +294,7 @@ def generic_graph_benchmark(benchmark_name, benchmark_parameters, options, roof_
     graph_interconnect(benchmark_name, benchmark_parameters, options, testing_results)
 
 
-def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max_size, step_size):
+def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max_size, step_size, rand_type):
     cur_small_size = min_size
     sizes = []
     bandwidths = []
@@ -266,13 +304,16 @@ def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max
         formatted_large_size = "2GB"
 
         cmd = "./bin/" + benchmark_name + " -small-size " + formatted_small_size + " -large-size " + \
-              formatted_large_size + " -rdt uniform"
+              formatted_large_size + " -rdt " + rand_type
         string_output = run_and_wait(cmd, options)
         timings = parse_timings(string_output)
 
         sizes.append(formatted_small_size)
         bandwidths.append(timings["avg_bw"])
-        cur_small_size += step_size
+        if step_size == -1:
+            cur_small_size *= 2
+        else:
+            cur_small_size += step_size
 
     testing_results[benchmark_name + "_" + mode] = {}
     for cur_size, cur_band in zip(sizes, bandwidths):
@@ -283,9 +324,9 @@ def benchmark_gather(benchmark_name, benchmark_parameters, options, testing_resu
     l1_size = get_L1_size(options.arch)
     prev_LLC_size = get_prev_LLC_size(options.arch)
     LLC_size = get_LLC_size(options.arch)
-    benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  l1_size, t2b("1KB"))
-    benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, prev_LLC_size*2,  LLC_size, t2b("1MB"))
-    benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, LLC_size*2,  t2b("1GB"), t2b("50MB"))
+    benchmark_gather_region(benchmark_name, "L1_latency", testing_results, t2b("1KB"),  l1_size, t2b("1KB"), "uniform")
+    benchmark_gather_region(benchmark_name, "LLC_latency", testing_results, prev_LLC_size*2,  LLC_size, t2b("1MB"), "uniform")
+    benchmark_gather_region(benchmark_name, "DRAM_latency", testing_results, LLC_size*2,  t2b("1GB"), t2b("50MB"), "uniform")
 
 
 def benchmark_scatter(benchmark_name, benchmark_parameters, options, testing_results):

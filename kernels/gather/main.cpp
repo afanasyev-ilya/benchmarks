@@ -41,6 +41,7 @@ void call_kernel(ParserBenchmark &parser)
     auto counter = PerformanceCounter(bytes_requested, flops_requested);
     int iterations = LOC_REPEAT;
 
+    cout << "RAND type: " << parser.get_rand_data_type() << endl;
     init(parser.get_rand_data_type(), large_data, indexes, small_data, large_size, small_size);
 
     for(int i = 0; i < iterations; i++)

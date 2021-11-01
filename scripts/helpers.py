@@ -177,6 +177,10 @@ def make_binaries(arch):
                          stderr=subprocess.PIPE)
     p.wait()
 
+
+complex_deps = {"cache_conflicts": "gather_ker"}
+
+
 def compile_bench(arch, bench):
     arch_params = ""
     if "intel" in arch:
@@ -187,6 +191,9 @@ def compile_bench(arch, bench):
         arch_params = "CXX=FCCpx ARCH=a64fx"
     else:
         raise Exception("Unsupported architecture for compilation")
+
+    if bench in complex_deps.keys():
+        bench = complex_deps[bench]
 
     cmd = "make " + bench + " " + arch_params
     print(cmd)
