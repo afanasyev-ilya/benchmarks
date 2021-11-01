@@ -12,6 +12,11 @@ enum OPT_MODE
     OPTIMIZED = 1
 };
 
+enum RAND_DATA_TYPE
+{
+    RMAT = 0,
+    UNIFORM = 1
+};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -30,6 +35,8 @@ private:
     DATATYPE_USED datatype;
     OPT_MODE opt_mode;
 
+    RAND_DATA_TYPE rand_data_type;
+
     int graph_scale;
 public:
     ParserBenchmark();
@@ -42,6 +49,8 @@ public:
 
     size_t get_small_size() {return small_size;};
     size_t get_large_size() {return large_size;};
+
+    RAND_DATA_TYPE get_rand_data_type(){return rand_data_type;};
 
     DATATYPE_USED get_datatype() {return datatype;};
     OPT_MODE get_opt_mode(){return opt_mode;};

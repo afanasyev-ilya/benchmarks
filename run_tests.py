@@ -266,7 +266,7 @@ def benchmark_gather_region(benchmark_name, mode, testing_results, min_size, max
         formatted_large_size = "2GB"
 
         cmd = "./bin/" + benchmark_name + " -small-size " + formatted_small_size + " -large-size " + \
-              formatted_large_size
+              formatted_large_size + " -rdt uniform"
         string_output = run_and_wait(cmd, options)
         timings = parse_timings(string_output)
 

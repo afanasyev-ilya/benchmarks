@@ -16,6 +16,8 @@ ParserBenchmark::ParserBenchmark()
     opt_mode = GENERIC;
 
     graph_scale = 10;
+
+    rand_data_type = UNIFORM;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,6 +86,15 @@ void ParserBenchmark::parse_args(int _argc, char **_argv)
 
             if(opt_str == "gen" || opt_str == "generic")
                 opt_mode = GENERIC;
+        }
+
+        if ((option.compare("-rdt") == 0) || (option.compare("-rand-data-type") == 0) )
+        {
+            string str = _argv[++i];
+            if(str == "rmat" || str == "RMAT")
+                rand_data_type = RMAT;
+            else if(str == "uniform" || str == "UNIFORM")
+                rand_data_type = UNIFORM;
         }
 
         if ((option.compare("-dt") == 0) || (option.compare("-datatype") == 0))

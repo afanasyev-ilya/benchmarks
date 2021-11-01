@@ -9,7 +9,59 @@
 #endif
 
 template<typename IT, typename DT>
-void init(DT *a, IT *b, DT *c, size_t large_size, size_t small_size)
+void rmat_init(DT *result, IT *indexes, DT *small_data, size_t large_size, size_t small_size)
+{
+    int seed;
+    #pragma omp parallel private(seed) num_threads(threads_count)
+    {
+        seed = int(time(NULL)) * omp_get_thread_num();
+
+        #pragma omp for schedule(guided, 1024)
+        for (long long cur_edge = 0; cur_edge < edges_count; cur_edge += step)
+        {
+            int x_middle = _vertices_count / 2, y_middle = _vertices_count / 2;
+            for (long long i = 1; i < n; i++)
+            {
+                int a_beg = 0, a_end = _a_prob;
+                int b_beg = _a_prob, b_end = b_beg + _b_prob;
+                int c_beg = _a_prob + _b_prob, c_end = c_beg + _c_prob;
+                int d_beg = _a_prob + _b_prob + _c_prob, d_end = d_beg + _d_prob;
+
+                int step = (int)pow(2, n - (i + 1));
+
+                int probability = rand_r(&seed) % 100;
+                if (a_beg <= probability && probability < a_end)
+                {
+                    x_middle -= step, y_middle -= step;
+                }
+                else if (b_beg <= probability && probability < b_end)
+                {
+                    x_middle -= step, y_middle += step;
+                }
+                else if (c_beg <= probability && probability < c_end)
+                {
+                    x_middle += step, y_middle -= step;
+                }
+                else if (d_beg <= probability && probability < d_end)
+                {
+                    x_middle += step, y_middle += step;
+                }
+            }
+            if (rand_r(&seed) % 2 == 0)
+                x_middle--;
+            if (rand_r(&seed) % 2 == 0)
+                y_middle--;
+
+            int from = x_middle;
+            int to = y_middle;
+
+            indexes[cur_edge] = to;
+        }
+    }
+}
+
+template<typename IT, typename DT>
+void uniform_init(DT *result, IT *indexes, DT *small_data, size_t large_size, size_t small_size)
 {
     #pragma omp parallel
     {
@@ -17,16 +69,36 @@ void init(DT *a, IT *b, DT *c, size_t large_size, size_t small_size)
         #pragma omp for schedule(static)
         for (size_t i = 0; i < large_size; i++)
         {
-            a[i] = rand_r(&myseed);
-            b[i] = (int)rand_r(&myseed) % small_size;
+            indexes[i] = (int)rand_r(&myseed) % small_size;
+        }
+    }
+}
+
+template<typename IT, typename DT>
+void init(RAND_DATA_TYPE rand_data_type, DT *result, IT *indexes, DT *small_data, size_t large_size, size_t small_size)
+{
+    #pragma omp parallel
+    {
+        unsigned int myseed = omp_get_thread_num();
+        #pragma omp for schedule(static)
+        for (size_t i = 0; i < large_size; i++)
+        {
+            result[i] = rand_r(&myseed);
+            indexes[i] = (int)rand_r(&myseed) % small_size;
         }
 
         #pragma omp for schedule(static)
         for (size_t i = 0; i < small_size; i++)
         {
-            c[i] = rand_r(&myseed);
+            small_data[i] = rand_r(&myseed);
         }
     }
+
+    if(rand_data_type == UNIFORM)
+        uniform_init(result, indexes, small_data, large_size, small_size);
+    else if(rand_data_type == RMAT)
+        uniform_init(result, indexes, small_data, large_size, small_size);
+
 }
 
 template<typename DT>
@@ -66,9 +138,7 @@ void gather_optimized(DT *large, IT *indexes, const DT * __restrict__ small, siz
         val = _mm512_i32gather_pd(idx, small, 8);
         _mm512_store_pd(&large[i], val);
     }
-    #endif
-
-    #ifdef __USE_ARM_SVE__
+    #elif defined(__USE_ARM_SVE__)
     #pragma omp parallel for schedule(static)
     for(size_t i = 0; i < size; i += 8)
     {
@@ -76,6 +146,12 @@ void gather_optimized(DT *large, IT *indexes, const DT * __restrict__ small, siz
         svuint64_t vec_idx = svld1sw_u64(pg, indexes + i);
         svfloat64_t vec_res = svld1_gather_index(pg, small, vec_idx);
         svst1(svptrue_b64(), &(large[i]), vec_res);
+    }
+    #else
+    #pragma omp parallel for schedule(static)
+    for(size_t i = 0; i < size; i++)
+    {
+        large[i] = small[indexes[i]];
     }
     #endif
 }
