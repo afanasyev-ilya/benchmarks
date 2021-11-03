@@ -144,25 +144,17 @@ def benchmark_caches_conflicts(options, testing_results):
         formatted_small_size = b2t(cur_small_size)
         formatted_large_size = "512MB"
 
-        cmd = "./bin/gather_ker -small-size " + formatted_small_size + " -large-size " + \
-              formatted_large_size + " -rdt uniform"
+        cmd = "./bin/gather_ker -small-size " + formatted_small_size + " -large-size " + formatted_large_size
         string_output = run_and_wait(cmd, options)
-        timings_uniform = parse_timings(string_output)
+        timings_gather = parse_timings(string_output)
 
-        cmd = "./bin/gather_ker -small-size " + formatted_small_size + " -large-size " + \
-              formatted_large_size + " -rdt rmat"
+        cmd = "./bin/gather_private_ker -small-size " + formatted_small_size + " -large-size " + formatted_large_size
         string_output = run_and_wait(cmd, options)
-        timings_rmat = parse_timings(string_output)
-
-        cmd = "./bin/gather_ker -small-size " + formatted_small_size + " -large-size " + \
-              formatted_large_size + " -rdt rmat_sh"
-        string_output = run_and_wait(cmd, options)
-        timings_rmat_sh = parse_timings(string_output)
+        timings_gather_private = parse_timings(string_output)
 
         sizes.append(formatted_small_size)
-        bandwidths.append({"uniform": timings_uniform["avg_bw"],
-                           "rmat": timings_rmat["avg_bw"],
-                           "rmat_shuffled": timings_rmat_sh["avg_bw"]})
+        bandwidths.append({"gather": timings_gather["avg_bw"],
+                           "gather_private": timings_gather_private["avg_bw"]})
         cur_small_size *= 2
 
     testing_results["cache_conflicts"] = {}
