@@ -21,8 +21,8 @@ void call_kernel(ParserBenchmark &parser)
 
     for(int i = 0; i < iterations; i++)
     {
-        counter.start_timing();
         re_init(res, size);
+        counter.start_timing();
 
         kernel(res, size);
 

@@ -34,8 +34,8 @@ void call_kernel(ParserBenchmark &parser)
 
     for(int i = 0; i < iterations; i++)
     {
-        counter.start_timing();
         re_init(in_data, out_data, size);
+        counter.start_timing();
 
         kernel<float>(in_data, out_data, size);
 

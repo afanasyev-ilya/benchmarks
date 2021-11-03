@@ -92,8 +92,8 @@ void call_kernel_d(ParserBenchmark &parser)
 
     for(int i = 0; i < iterations; i++)
     {
-        counter.start_timing();
         re_init(in_data, out_data, size);
+        counter.start_timing();
 
         kernel<double, SIMD_SIZE_D>(parser.get_opt_mode(), in_data, out_data, size);
 

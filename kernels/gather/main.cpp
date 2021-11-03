@@ -46,8 +46,9 @@ void call_kernel(ParserBenchmark &parser)
 
     for(int i = 0; i < iterations; i++)
 	{
-		counter.start_timing();
         re_init(small_data, small_size);
+
+		counter.start_timing();
 
 		kernel(parser.get_mode(), large_data, indexes, small_data, large_size);
 
