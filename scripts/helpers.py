@@ -176,6 +176,14 @@ def make_binaries(arch):
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     p.wait()
+    if p.returncode:
+        print("Compilation errors....")
+        output, err = p.communicate()
+        rc = p.returncode
+        p_status = p.wait()
+        string_output = output.decode("utf-8")
+        print(string_output)
+        exit()
 
 
 complex_deps = {"cache_conflicts": "gather_ker"}
@@ -202,3 +210,11 @@ def compile_bench(arch, bench):
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     p.wait()
+    if p.returncode:
+        print("Compilation errors....")
+        output, err = p.communicate()
+        rc = p.returncode
+        p_status = p.wait()
+        string_output = output.decode("utf-8")
+        print(string_output)
+        exit()
