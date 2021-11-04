@@ -19,13 +19,21 @@ typedef long long index_type;
 
 void call_kernel(ParserBenchmark &parser)
 {
-    size_t large_size = parser.get_large_size() / sizeof(base_type);
-    size_t small_size = parser.get_small_size() / sizeof(base_type);
-
     int threads = omp_get_max_threads();
+    size_t large_size = parser.get_large_size() / sizeof(base_type);
+    size_t wall_small_size = parser.get_small_size() / sizeof(base_type);
+    size_t small_size = wall_small_size/threads;
+
+    #pragma omp parallel
+    {
+        int thread_num = omp_get_thread_num();
+        int cpu_num = sched_getcpu();
+        printf("Thread %3d is running on CPU %3d\n", thread_num, cpu_num);
+    }
+
     print_size("large_size", large_size*sizeof(base_type));
-    print_size("small_size", small_size*sizeof(base_type));
-    print_size("small_size on each thread", (small_size/threads)*sizeof(base_type));
+    print_size("wall_small_size",  wall_small_size*sizeof(base_type));
+    print_size("local small_size", small_size*sizeof(base_type));
 
     base_type *large_data;
     base_type **small_data;
@@ -36,7 +44,7 @@ void call_kernel(ParserBenchmark &parser)
     MemoryAPI::allocate_array(&small_data, threads);
     for(int i = 0; i < threads; i++)
     {
-        MemoryAPI::allocate_array(&(small_data[i]), small_size/threads);
+        MemoryAPI::allocate_array(&(small_data[i]), small_size);
     }
 
     size_t bytes_requested = ((size_t)large_size) * (2 * sizeof(base_type) + sizeof(index_type));
@@ -45,7 +53,6 @@ void call_kernel(ParserBenchmark &parser)
     int iterations = LOC_REPEAT;
 
     init(large_data, indexes, small_data, large_size, small_size);
-    cout << "init done" << endl;
 
     for(int i = 0; i < iterations; i++)
 	{
