@@ -7,6 +7,7 @@ from scripts.helpers import *
 #from scripts.plot import plot_gather_or_scatter
 import json
 import sys
+import csv
 
 
 linear_length = 800000000
@@ -140,7 +141,7 @@ def benchmark_caches_conflicts(options, testing_results):
     sizes = []
     bandwidths = []
 
-    while cur_small_size <= t2b("70MB"):
+    while cur_small_size <= t2b("10MB"):
         formatted_small_size = b2t(cur_small_size)
         formatted_large_size = "512MB"
 
@@ -172,6 +173,18 @@ def benchmark_caches_conflicts(options, testing_results):
     testing_results["cache_conflicts"] = {}
     for cur_size, cur_band in zip(sizes, bandwidths):
         testing_results["cache_conflicts"][cur_size] = cur_band
+
+    header = ['size', 'gather_naive', 'gather_private', 'gather_shared (good)', 'gather_shared (bad)']
+
+    with open('cache_conflicts.csv', 'w', encoding='UTF8') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        for cur_size, cur_band in zip(sizes, bandwidths):
+            data = [cur_size, cur_band["gather_naive"],
+                    cur_band["gather_private"],
+                    cur_band["gather_shared (good)"],
+                    cur_band["gather_shared (bad)"]]
+            writer.writerow(data)
 
 
 def fma_benchmark(benchmark_name, benchmark_parameters, options, testing_results):
