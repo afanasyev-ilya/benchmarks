@@ -170,40 +170,14 @@ def make_binaries(arch):
     else:
         raise Exception("Unsupported architecture for compilation")
 
-    cmd = "make " + arch_params
-    p = subprocess.Popen(cmd, shell=True,
-                         stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
-    p.wait()
-    if p.returncode:
-        print("Compilation errors....")
-        output, err = p.communicate()
-        rc = p.returncode
-        p_status = p.wait()
-        string_output = output.decode("utf-8")
-        print(string_output)
-        exit()
+    compile_target("all", arch_params)
 
 
-complex_deps = {"cache_conflicts": "gather_ker"}
+complex_deps = {"cache_conflicts": ["gather_ker", "gather_private_ker", "gather_shared_ker"]}
 
 
-def compile_bench(arch, bench):
-    arch_params = ""
-    if "intel" in arch:
-        arch_params = "CXX=icpc ARCH=intel"
-    elif "kunpeng" in arch:
-        arch_params = "CXX=g++ ARCH=kunpeng"
-    elif "a64fx" in arch:
-        arch_params = "CXX=FCCpx ARCH=a64fx"
-    else:
-        raise Exception("Unsupported architecture for compilation")
-
-    if bench in complex_deps.keys():
-        bench = complex_deps[bench]
-
-    cmd = "make " + bench + " " + arch_params
+def compile_target(target, arch_params):
+    cmd = "make " +target + " " + arch_params
     print(cmd)
     p = subprocess.Popen(cmd, shell=True,
                          stdin=subprocess.PIPE,
@@ -218,3 +192,21 @@ def compile_bench(arch, bench):
         string_output = output.decode("utf-8")
         print(string_output)
         exit()
+
+
+def compile_bench(arch, bench):
+    arch_params = ""
+    if "intel" in arch:
+        arch_params = "CXX=icpc ARCH=intel"
+    elif "kunpeng" in arch:
+        arch_params = "CXX=g++ ARCH=kunpeng"
+    elif "a64fx" in arch:
+        arch_params = "CXX=FCCpx ARCH=a64fx"
+    else:
+        raise Exception("Unsupported architecture for compilation")
+
+    if bench in complex_deps.keys():
+        for target in complex_deps[bench]:
+            compile_target(target, arch_params)
+    else:
+        compile_target(bench, arch_params)

@@ -1,28 +1,23 @@
 #include "common/lib.h"
 
-#ifdef __USE_INTEL__
 typedef double base_type;
 typedef int index_type;
-#endif
 
-#ifdef __USE_KUNPENG_920__
-typedef double base_type;
-typedef int index_type;
-#endif
+#define SHARED_THREADS_NUM 4
 
-#ifdef __USE_A64FX__
-typedef double base_type;
-typedef long long index_type;
-#endif
-
-#include "gather_private.h"
+#include "gather_shared.h"
 
 void call_kernel(ParserBenchmark &parser)
 {
-    int threads = omp_get_max_threads();
+    int threads_groups = omp_get_max_threads()/SHARED_THREADS_NUM;
+
     size_t large_size = parser.get_large_size() / sizeof(base_type);
     size_t wall_small_size = parser.get_small_size() / sizeof(base_type);
-    size_t small_size = wall_small_size/threads;
+    size_t small_size = wall_small_size/threads_groups;
+
+    print_size("large_size", large_size*sizeof(base_type));
+    print_size("wall_small_size",  wall_small_size*sizeof(base_type));
+    print_size("local small_size (shared between each K cores)", small_size*sizeof(base_type));
 
     #pragma omp parallel
     {
@@ -31,18 +26,14 @@ void call_kernel(ParserBenchmark &parser)
         printf("Thread %3d is running on CPU %3d\n", thread_num, cpu_num);
     }
 
-    print_size("large_size", large_size*sizeof(base_type));
-    print_size("wall_small_size",  wall_small_size*sizeof(base_type));
-    print_size("local small_size", small_size*sizeof(base_type));
-
     base_type *large_data;
     base_type **small_data;
     index_type *indexes;
 
     MemoryAPI::allocate_array(&large_data, large_size);
     MemoryAPI::allocate_array(&indexes, large_size);
-    MemoryAPI::allocate_array(&small_data, threads);
-    for(int i = 0; i < threads; i++)
+    MemoryAPI::allocate_array(&small_data, threads_groups);
+    for(int i = 0; i < threads_groups; i++)
     {
         MemoryAPI::allocate_array(&(small_data[i]), small_size);
     }
@@ -60,7 +51,7 @@ void call_kernel(ParserBenchmark &parser)
 
 		counter.start_timing();
 
-		kernel(large_data, indexes, small_data, large_size);
+		kernel(parser.get_opt_mode(), large_data, indexes, small_data, large_size);
 
 		counter.end_timing();
 		counter.update_counters();
@@ -71,7 +62,7 @@ void call_kernel(ParserBenchmark &parser)
 
     MemoryAPI::free_array(large_data);
     MemoryAPI::free_array(indexes);
-    for(int i = 0; i < threads; i++)
+    for(int i = 0; i < threads_groups; i++)
     {
         MemoryAPI::free_array(small_data[i]);
     }

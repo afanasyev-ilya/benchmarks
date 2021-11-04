@@ -136,26 +136,38 @@ def generic_benchmark(benchmark_name, benchmark_parameters, options, testing_res
 
 
 def benchmark_caches_conflicts(options, testing_results):
-    cur_small_size = t2b("1KB")
+    cur_small_size = t2b("1MB")
     sizes = []
     bandwidths = []
 
-    while cur_small_size <= t2b("512MB"):
+    while cur_small_size <= t2b("70MB"):
         formatted_small_size = b2t(cur_small_size)
         formatted_large_size = "512MB"
 
         cmd = "./bin/gather_ker -small-size " + formatted_small_size + " -large-size " + formatted_large_size
         string_output = run_and_wait(cmd, options)
-        timings_gather = parse_timings(string_output)
+        gather_naive = parse_timings(string_output)
 
         cmd = "./bin/gather_private_ker -small-size " + formatted_small_size + " -large-size " + formatted_large_size
         string_output = run_and_wait(cmd, options)
-        timings_gather_private = parse_timings(string_output)
+        gather_private = parse_timings(string_output)
+
+        cmd = "./bin/gather_shared_ker -small-size " + formatted_small_size + " -large-size " + formatted_large_size + \
+              " -opt-mode opt"
+        string_output = run_and_wait(cmd, options)
+        gather_shared_good = parse_timings(string_output)
+
+        cmd = "./bin/gather_shared_ker -small-size " + formatted_small_size + " -large-size " + formatted_large_size + \
+              " -opt-mode gen"
+        string_output = run_and_wait(cmd, options)
+        gather_shared_bad = parse_timings(string_output)
 
         sizes.append(formatted_small_size)
-        bandwidths.append({"gather": timings_gather["avg_bw"],
-                           "gather_private": timings_gather_private["avg_bw"]})
-        cur_small_size *= 2
+        bandwidths.append({"gather_naive": gather_naive["avg_bw"],
+                           "gather_private": gather_private["avg_bw"],
+                           "gather_shared (good)": gather_shared_good["avg_bw"],
+                           "gather_shared (bad)": gather_shared_bad["avg_bw"]})
+        cur_small_size += t2b("1MB")
 
     testing_results["cache_conflicts"] = {}
     for cur_size, cur_band in zip(sizes, bandwidths):
