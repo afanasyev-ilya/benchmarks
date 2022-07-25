@@ -415,6 +415,9 @@ if __name__ == "__main__":
     parser.add_option('-a', '--arch',
                       action="store", dest="arch",
                       help="specify target architecture", default=get_arch())
+    parser.add_option('-m', '--metrics-run',
+                      action="store_true", dest="metrics_run",
+                      help="force metrics run", default=False)
 
     options, args = parser.parse_args()
 
